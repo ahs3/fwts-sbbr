@@ -40,6 +40,7 @@ typedef struct {
 #define RESULTS_LOG	"results"
 
 #define FWTS_FLAG_RUN_ALL			\
+	(fwts_framework_flags)			\
 	(FWTS_FLAG_BATCH |			\
 	 FWTS_FLAG_INTERACTIVE |		\
 	 FWTS_FLAG_BATCH_EXPERIMENTAL |		\
@@ -48,7 +49,10 @@ typedef struct {
 	 FWTS_FLAG_UTILS |			\
 	 FWTS_FLAG_UNSAFE |			\
 	 FWTS_FLAG_TEST_UEFI |			\
-	 FWTS_FLAG_TEST_ACPI)
+	 FWTS_FLAG_TEST_ACPI |			\
+	 FWTS_FLAG_TEST_SBBR_UEFI |		\
+	 FWTS_FLAG_TEST_SBBR_ACPI |		\
+	 FWTS_FLAG_TEST_SBBR)
 
 static fwts_categories categories[] = {
 	{ "ACPI",			FWTS_FLAG_TEST_ACPI },
@@ -60,6 +64,9 @@ static fwts_categories categories[] = {
 	{ "Utilities",			FWTS_FLAG_UTILS },
 	{ "Unsafe",			FWTS_FLAG_UNSAFE },
 	{ "UEFI",			FWTS_FLAG_TEST_UEFI },
+	{ "SBBR UEFI",			FWTS_FLAG_TEST_SBBR_UEFI },
+	{ "SBBR ACPI",			FWTS_FLAG_TEST_SBBR_ACPI },
+	{ "All SBBR",			FWTS_FLAG_TEST_SBBR },
 	{ NULL,				0 },
 };
 
@@ -107,6 +114,9 @@ static fwts_option fwts_framework_options[] = {
 	{ "pm-method",  "",   1, "Select the power method to use. Accepted values are \"logind\", \"pm-utils\", \"sysfs\""},
 	{ "show-tests-categories","", 0, "Show tests and associated categories." },
 	{ "acpitests",		"",   0, "Run ACPI tests." },
+	{ "sbbruefi",		"",   0, "Run SBBR tests specific to UEFI." },
+	{ "sbbracpi",		"",   0, "Run SBBR tests specific to ACPI." },
+	{ "sbbr",		"",   0, "Run all SBBR tests." },
 	{ NULL, NULL, 0, NULL }
 };
 
@@ -147,7 +157,7 @@ void fwts_framework_test_add(
 	fwts_framework_test *new_test;
 
 	if (flags & ~(FWTS_FLAG_RUN_ALL | FWTS_FLAG_ROOT_PRIV)) {
-		fprintf(stderr, "Test %s flags must be a bit field in 0x%x, got %x\n",
+		fprintf(stderr, "Test %s flags must be a bit field in 0x%lx, got 0x%lx\n",
 			name, FWTS_FLAG_RUN_ALL, flags);
 		exit(EXIT_FAILURE);
 	}
@@ -159,7 +169,7 @@ void fwts_framework_test_add(
 	}
 
 	/* Total up minor tests in this test */
-	for (ops->total_tests = 0; 
+	for (ops->total_tests = 0;
 	     ops->minor_tests[ops->total_tests].test_func != NULL;
 	     ops->total_tests++)
 		;
@@ -1229,6 +1239,15 @@ int fwts_framework_options_handler(fwts_framework *fw, int argc, char * const ar
 			break;
 		case 40: /* --acpitests */
 			fw->flags |= FWTS_FLAG_TEST_ACPI;
+			break;
+		case 41: /* --sbbruefi */
+			fw->flags = FWTS_FLAG_TEST_SBBR_UEFI;
+			break;
+		case 42: /* --sbbracpi */
+			fw->flags = FWTS_FLAG_TEST_SBBR_ACPI;
+			break;
+		case 43: /* --sbbr */
+			fw->flags = FWTS_FLAG_TEST_SBBR;
 			break;
 		}
 		break;

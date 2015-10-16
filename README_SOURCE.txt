@@ -157,6 +157,9 @@ where:
 		FWTS_TEST_BIOS                  BIOS specific
 		FWTS_TEST_UEFI                  UEFI specific
 		FWTS_TEST_ACPI                  ACPI specific
+		FWTS_TEST_SBBR_UEFI		SBBR UEFI specific
+		FWTS_TEST_SBBR_ACPI		SBBR ACPI specific
+		FWTS_TEST_SBBR			All SBBR specific
 
 		so, we can have FWTS_BATCH | FWTS_ROOT_PRIV | FWTS_ACPI
 		for a batch test that requires root privilege and is an ACPI
