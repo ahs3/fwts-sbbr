@@ -128,7 +128,8 @@ fwts_SOURCES = main.c 				\
 	uefi/securebootcert/securebootcert.c	\
 	uefi/uefivarinfo/uefivarinfo.c		\
 	uefi/uefibootpath/uefibootpath.c	\
-	uefi/uefirtauthvar/uefirtauthvar.c
+	uefi/uefirtauthvar/uefirtauthvar.c	\
+	ahs3/foo/foo.c
 
 fwts_LDFLAGS = -lm `pkg-config --libs glib-2.0 gio-2.0`
 
