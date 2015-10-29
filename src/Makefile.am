@@ -39,6 +39,8 @@ fwts_SOURCES = main.c 				\
 	acpi/brightness/brightness.c 		\
 	acpi/brightness/autobrightness.c 	\
 	acpi/checksum/checksum.c 		\
+	acpi/compliance/madt.c			\
+	acpi/compliance/madt_subtables.c	\
 	acpi/cpep/cpep.c			\
 	acpi/crsdump/crsdump.c			\
 	acpi/crsdump/prsdump.c			\
