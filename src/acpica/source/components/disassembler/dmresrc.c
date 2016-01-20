@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -284,6 +284,7 @@ AcpiDmBitList (
             {
                 AcpiOsPrintf (",");
             }
+
             Previous = TRUE;
             AcpiOsPrintf ("%u", i);
         }
@@ -357,7 +358,8 @@ AcpiDmResourceTemplate (
         Status = AcpiUtValidateResource (NULL, Aml, &ResourceIndex);
         if (ACPI_FAILURE (Status))
         {
-            AcpiOsPrintf ("/*** Could not validate Resource, type (%X) %s***/\n",
+            AcpiOsPrintf (
+                "/*** Could not validate Resource, type (%X) %s***/\n",
                 ResourceType, AcpiFormatException (Status));
             return;
         }
@@ -407,7 +409,8 @@ AcpiDmResourceTemplate (
 
                 AcpiDmIndent (Level);
                 AcpiOsPrintf (
-                    "/*** Disassembler: inserted missing EndDependentFn () ***/\n");
+                    "/*** Disassembler: inserted "
+                    "missing EndDependentFn () ***/\n");
             }
             return;
 

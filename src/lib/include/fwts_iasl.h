@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Canonical
+ * Copyright (C) 2010-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,8 +23,6 @@
 #include "fwts.h"
 #include <stdint.h>
 
-int fwts_iasl_aml_file_count(void);
-char *fwts_iasl_aml_name(const int nth);
 int fwts_iasl_init(fwts_framework *fw);
 void fwts_iasl_deinit(void);
 
@@ -32,12 +30,12 @@ int fwts_iasl_disassemble_all_to_file(fwts_framework *fw,
 	const char *path);
 
 int fwts_iasl_disassemble(fwts_framework *fw,
-	const char *table,
-	const int which,
+	const fwts_acpi_table_info *info,
+	const bool use_externals,
 	fwts_list **ias_output);
 
 int fwts_iasl_reassemble(fwts_framework *fw,
-	const int which,
+	const fwts_acpi_table_info *info,
 	fwts_list **iasl_disassembly,
 	fwts_list **iasl_stdout,
 	fwts_list **iasl_stderr);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Canonical
+ * Copyright (C) 2010-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -393,20 +393,25 @@ static char *fwts_log_filename(const char *filename, const fwts_log_type type)
 }
 
 /*
- *  fwts_log_vprintf()
+ *  fwts_log_printf()
  *	printf to a log
  */
-int fwts_log_printf(fwts_log *log,
+int fwts_log_printf(
+	const fwts_framework *fw,
 	const fwts_log_field field,
 	const fwts_log_level level,
 	const char *status,
 	const char *label,
 	const char *prefix,
 	const char *fmt, ...)
+
 {
 	int ret = 0;
+	fwts_log *log = fw->results;
 
 	if (!((field & LOG_FIELD_MASK) & fwts_log_filter))
+		return ret;
+	if (FWTS_LEVEL_IGNORE(fw, level))
 		return ret;
 
 	if (log && log->magic == LOG_MAGIC) {

@@ -1,3 +1,152 @@
+fwts (16.01.00-0ubuntu1) xenial; urgency=low
+
+  [Alex Hung]
+  * Fix spelling mistakes of "ACPI"
+  * method: update method status
+  * acpi: method: add _PTC test
+  * fwts-test: update for ACPI method _PTC test
+  * fwts-test: arg-help-0001: remove TMPLOG.orig files
+
+  [Colin Ian King]
+  * utilities: kernelscan: fix memory leaks and a segfault
+  * acpi: cstates: fix clang build warning on zero CPUs.
+  * acpi: s3, s3power, s4: replace cleanup free with explicit frees
+  * data: klog.json: add in some more kernel error messages for 4.4
+    (LP: #1526746)
+  * ACPICA: Update to version 20151218 (LP: #1527733)
+  * fwts-test: keep test results in-sync with latest ACPICA output
+  * acpi: hpet: fwts_mmap failure is FWTS_MAP_FAILED and not NULL
+  * acpi: pcc: fwts_mmap failure is FWTS_MAP_FAILED and not NULL
+  * bios: ebdadump: fwts_mmap failure is FWTS_MAP_FAILED and not MAP_FAILED
+  * acpi: syntaxcheck: ASL_MSG_COMPILER_RESERVED failure should be an info
+    (LP: #1529717)
+  * Update copyright year to 2016
+  * fwts-test: sync arg-help with copyright year changes
+  * ACPICA: Update to version 20160108 (LP: #1532268)
+
+  [Fan Wu]
+  * dmi: dmicheck: fix reserved bits mask for Processor Information
+
+  [Ivan Hu]
+  * uefidump: add dumping global variabl AuditMode
+  * uefidump: add dumping global variabl DeployedMode
+  * uefidump: add dumping global variable OsRecoveryOrder
+  * uefidump: add dumping global variable PlatformRecovery####
+  * uefidump: add dumping global variable SysPrepOrder
+  * uefidump: add dumping global variable SysPrep####
+  * uefirtvariable: fix decalred VLA have zero size (LP: #1526815)
+  * esrtdump: add dumping for esrt table (LP: #1532103)
+  * fwts-test: sync up with esrtdump changes
+
+ -- Ivan Hu <ivan.hu@ubuntu.com>  Wed, 13 Jan 2016 16:12:49 +0800
+
+fwts (15.12.00-0ubuntu1) xenial; urgency=low
+
+  [Alex Hung]
+  * acpi: fpdt: add a terminate for buggy BIOS that reports zero length
+  * live-image/fwts-frontend-text: add a selection for recommended
+
+  [Colin Ian King]
+  * lib: klog: remove use of pcre, use regex instead
+  * utilities: kernelscan: remove use of pcre, use regex instead
+  * uefidump: add more bounds checking and remove need for heap
+  * utilities: fix memory leak, line not being free'd
+  * acpi: bert: remove redundant variable 'length'
+  * data: klog.json: add in some more kernel error messages for 4.3
+  * ACPICA: Update to version 20151124 (LP: #1519425)
+  * lib: iasl: rework IASL interface to ACPICA
+  * acpi: acpidump: use IASL rather than fwts custom table dump code
+  * fwts-test: fix up acpidump releated tests
+  * s3 + klog: make log scanning more robust for S3 (LP: #1522292)
+  * ACPI: Add ASPT test
+  * lib: framework: allow mixed tests and test category options
+  * lib: acpica: make region handler more robust (LP: #1524217)
+  * fwts: framework: Add --log-level option
+  * fwts-test: update arg-help tests with new --log-level option
+  * debian: copyright, fix lintian warnings
+  * Debian: update Standards-Version to 3.9.6
+  * acpi: acpidump: check for fwts_iasl_init failure
+  * lib: fwts_acpi_tables: fix segfault when tables fail to load (LP: #1452201)
+  * acpi: dbg2: remove dead store to ptr1
+  * hotkey: fix key reading loop, it needs to loop more than once
+  * lib: fwts_framework: remove dead store to len in for loop
+  * lib: fwts_acpi_table: remove redundant store to rsdt
+  * acpi: gpedump: remove redundant store to gpe_xrupt_info
+  * lib: fwts_acpi_tables: remove dead store to facs
+  * acpica: fwts_acpica: remove redundant store to length
+  * lib: fwts_acpi_tables: remove redundant store to xsdt
+  * lib: fwts_acpi_tables: check table to avoid dereferencing NULL ptr
+
+  [Ivan Hu]
+  * lib: fwts_uefi: add SD device path define
+  * uefibootpath: add test for the SD device path
+  * uefidump: add dumping for the SD device path
+  * lib: fwts_uefi: add efi bluetooth device path define
+  * uefibootpath: add test for the bluetooth device path
+  * uefidump: add dumping for the bluetooth device path
+  * lib: fwts_uefi: add wireless device path define
+  * uefibootpath: add test for the wireless device path
+  * uefidump: add dumping for the wireless device path
+  * lib: fwts_uefi: add ramdisk device path define
+  * uefibootpath: add test for the ramdisk device path
+  * uefidump: add dumping for the ramdisk device path
+  * uefibootpath: fix the wrong type for relative offset range path
+
+  [Jiri Vohanka]
+  * lib: fwts_acpi_table: Fix FADT update in creation of fake FACS table.
+
+ -- Alex Hung <alex.hung@ubuntu.com>  Wed, 16 Dec 2015 15:08:32 +0800
+
+fwts (15.11.00-0ubuntu1) xenial; urgency=low
+
+  [Al Stone]
+  * Add in the notion of ACPI compliance tests.
+  * MADT subtables: Local SAPIC structure has 3 reserved bytes, not 1
+  * ACPI: MADT: update GICC flag checks for ACPI 6.0
+  * ACPI: MADT: further update to GICC flag checks for 6.0
+
+  [Alex Hung]
+  * acpi: method: skip scope names in method_evaluate_method
+  * acpi: method: add _GPE test
+  * fwts-test: update for _GPE method test
+  * fwts-test: remove tmp log for LPIT
+  * acpi: method: add _TSN test
+  * acpi: method: add _TFP test
+  * fwts-test: update for _TSN and _TFP tests
+  * acpi: method: add _EC test
+  * acpi: method: add _CWS test
+  * acpi: method: add _BTH test
+  * fwts-test: update for _EC, _CWS and _BTH tests
+  * acpidump: add missing reserved fields to MADT structures
+  * fwts-test: update for madt and acpidump changes
+  * auto-packager: mkpackage.sh: add xenial
+
+  [Colin Ian King]
+  * ACPICA: Update to version 20150930 (LP: #1502044)
+  * cpufreq: the calibration is taking a long time, make it faster
+  * fwts-test: update dmicheck regression test
+  * acpi: tpm2: add check for zero control area address (LP: #1506442)
+  * acpi: tcpa: replace tab with spaces to fix formatting alignment
+  * lib: framework: pack fwts_framework_flags to ensure it is a 32 bit int
+  * man page: update author contributions
+
+  [Ivan Hu]
+  * securebootcert: change fail to warning when MS UEFI CA not found in DB
+  * lib: fwts_uefi: add BMC device path define
+  * uefidump: add dumping the BMC device path
+  * uefibootpath: add test for the BMC device path
+  * lib: fwts_uefi: add the URI device path define
+  * uefibootpath: add test for the URI device path
+  * uefidump: add dumping for the URI device path
+  * lib: fwts_uefi: add the UFS device path define
+  * uefidump: add dumping for the UFS device path
+  * uefibootpath: add test for the UFS device path
+
+  [Jiri Vohanka]
+  * dmi: dmicheck: fix SMBIOS issues on aarch64 systems
+
+ -- Alex Hung <alex.hung@ubuntu.com>  Thu, 12 Nov 2015 14:24:44 +0800
+
 fwts (15.09.00-0ubuntu1) wily; urgency=low
 
   [Alex Hung]

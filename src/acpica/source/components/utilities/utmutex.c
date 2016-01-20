@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -401,11 +401,12 @@ AcpiUtAcquireMutex (
         "Thread %u attempting to acquire Mutex [%s]\n",
         (UINT32) ThisThreadId, AcpiUtGetMutexName (MutexId)));
 
-    Status = AcpiOsAcquireMutex (AcpiGbl_MutexInfo[MutexId].Mutex,
-                ACPI_WAIT_FOREVER);
+    Status = AcpiOsAcquireMutex (
+        AcpiGbl_MutexInfo[MutexId].Mutex, ACPI_WAIT_FOREVER);
     if (ACPI_SUCCESS (Status))
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX, "Thread %u acquired Mutex [%s]\n",
+        ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX,
+            "Thread %u acquired Mutex [%s]\n",
             (UINT32) ThisThreadId, AcpiUtGetMutexName (MutexId)));
 
         AcpiGbl_MutexInfo[MutexId].UseCount++;

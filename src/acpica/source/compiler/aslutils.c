@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -118,7 +118,9 @@
 #include "acdisasm.h"
 #include "acnamesp.h"
 #include "amlcode.h"
-#include <acapps.h>
+#include "acapps.h"
+#include <sys/stat.h>
+
 
 #define _COMPONENT          ACPI_COMPILER
         ACPI_MODULE_NAME    ("aslutils")
@@ -135,6 +137,40 @@ static void
 UtAttachNameseg (
     ACPI_PARSE_OBJECT       *Op,
     char                    *Name);
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    UtQueryForOverwrite
+ *
+ * PARAMETERS:  Pathname            - Output filename
+ *
+ * RETURN:      TRUE if file does not exist or overwrite is authorized
+ *
+ * DESCRIPTION: Query for file overwrite if it already exists.
+ *
+ ******************************************************************************/
+
+BOOLEAN
+UtQueryForOverwrite (
+    char                    *Pathname)
+{
+    struct stat             StatInfo;
+
+
+    if (!stat (Pathname, &StatInfo))
+    {
+        fprintf (stderr, "Target file \"%s\" already exists, overwrite? [y|n] ",
+            Pathname);
+
+        if (getchar () != 'y')
+        {
+            return (FALSE);
+        }
+    }
+
+    return (TRUE);
+}
 
 
 /*******************************************************************************
@@ -271,7 +307,6 @@ UtBeginEvent (
     AslGbl_Events[AslGbl_NextEvent].StartTime = AcpiOsGetTimer ();
     AslGbl_Events[AslGbl_NextEvent].EventName = Name;
     AslGbl_Events[AslGbl_NextEvent].Valid = TRUE;
-
     return (AslGbl_NextEvent++);
 }
 
@@ -522,9 +557,11 @@ UtDisplaySummary (
             if (Gbl_Files[ASL_FILE_AML_OUTPUT].Handle)
             {
                 FlPrintFile (FileId,
-                    "%-14s %s - %u bytes, %u named objects, %u executable opcodes\n",
+                    "%-14s %s - %u bytes, %u named objects, "
+                    "%u executable opcodes\n",
                     "AML Output:",
-                    Gbl_Files[ASL_FILE_AML_OUTPUT].Filename, Gbl_TableLength,
+                    Gbl_Files[ASL_FILE_AML_OUTPUT].Filename,
+                    FlGetFileSize (ASL_FILE_AML_OUTPUT),
                     TotalNamedObjects, TotalExecutableOpcodes);
             }
         }
@@ -878,6 +915,7 @@ UtPadNameWithUnderscores (
         {
             *PaddedNameSeg = '_';
         }
+
         PaddedNameSeg++;
     }
 }
@@ -1162,7 +1200,7 @@ stroul64 (
         /* Check to see if value is out of range: */
 
         if (ReturnValue > ((ACPI_UINT64_MAX - (UINT64) Index) /
-                            (UINT64) Base))
+            (UINT64) Base))
         {
             goto ErrorExit;
         }

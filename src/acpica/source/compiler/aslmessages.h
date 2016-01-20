@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -313,6 +313,8 @@ typedef enum
     ASL_MSG_LOCAL_NOT_USED,
     ASL_MSG_ARG_AS_LOCAL_NOT_USED,
     ASL_MSG_ARG_NOT_USED,
+    ASL_MSG_CONSTANT_REQUIRED,
+    ASL_MSG_CROSS_TABLE_SCOPE,
 
     /* These messages are used by the Data Table compiler only */
 

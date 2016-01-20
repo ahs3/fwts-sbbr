@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -310,6 +310,7 @@ ApCheckPackage (
                 ApCheckObjectType (Predefined->Info.Name, Op,
                     Package->RetInfo3.TailObjectType, i);
             }
+
             Op = Op->Asl.Next;
         }
         break;

@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -161,7 +161,7 @@ AcpiDbSetMethodBreakpoint (
 
     Address = strtoul (Location, NULL, 16);
     AmlOffset = (UINT32) ACPI_PTR_DIFF (Op->Common.Aml,
-                    WalkState->ParserState.AmlStart);
+        WalkState->ParserState.AmlStart);
     if (Address <= AmlOffset)
     {
         AcpiOsPrintf ("Breakpoint %X is beyond current address %X\n",

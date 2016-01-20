@@ -2,7 +2,10 @@
                              time options.
 --acpica-debug               Enable ACPICA debug
                              /warning messages.
---acpitests                  Run ACPI tests.
+--acpicompliance             Run ACPI tests for
+                             spec compliance.
+--acpitests                  Run general ACPI
+                             tests.
 -a, --all                    Run all tests.
 -b, --batch                  Run non-Interactive
                              tests.
@@ -62,6 +65,9 @@
                              failure error level,
                              %line - log line
                              number.
+--log-level                  Specify error level
+                             to report failed test
+                             messages,
 --log-type                   Specify log type
                              (plaintext, json,
                              html or xml).
@@ -223,5 +229,5 @@
 -u, --utils                  Run Utility 'tests'.
                              (Vxx.xx.xx).
 
-Some of this work - Copyright (c) 1999 - 2015, Intel Corp. All rights reserved.
-Some of this work - Copyright (c) 2010 - 2015, Canonical.
+Some of this work - Copyright (c) 1999 - 2016, Intel Corp. All rights reserved.
+Some of this work - Copyright (c) 2010 - 2016, Canonical.

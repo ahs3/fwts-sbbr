@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2006, Intel Corporation
- * Copyright (C) 2010-2015 Canonical
+ * Copyright (C) 2010-2016 Canonical
  *
  * This file is was originally from the Linux-ready Firmware Developer Kit
  *
@@ -217,7 +217,7 @@ static int cstates_test1(fwts_framework *fw)
 	}
 
 	/* How many CPUs are there? */
-	for (cpus=0;(entry = readdir(dir)) != NULL;)
+	for (cpus = 0; (entry = readdir(dir)) != NULL;)
 		if (entry &&
 		    (strlen(entry->d_name)>3) &&
 		    (strncmp(entry->d_name, "cpu", 3) == 0) &&
@@ -226,7 +226,7 @@ static int cstates_test1(fwts_framework *fw)
 
 	rewinddir(dir);
 
-	for (i=0;(entry = readdir(dir)) != NULL;) {
+	for (i = 0; (cpus > 0) && (entry = readdir(dir)) != NULL;) {
 		if (entry &&
 		    (strlen(entry->d_name)>3) &&
 		    (strncmp(entry->d_name, "cpu", 3) == 0) &&

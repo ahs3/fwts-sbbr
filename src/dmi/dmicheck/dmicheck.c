@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Canonical
+ * Copyright (C) 2010-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -332,6 +332,13 @@ static void* dmi_table_smbios(fwts_framework *fw, fwts_smbios_entry *entry)
 	void *mem;
 	char anchor[8];
 
+	/* 32 bit entry sanity check on length */
+	if ((length == 0) || (length > 0xffff)) {
+		fwts_log_info(fw, "SMBIOS table size of %zu bytes looks "
+			"suspicious",  length);
+		return NULL;
+	}
+
 	mem = fwts_mmap(addr, length);
 	if (mem != FWTS_MAP_FAILED) {
 		table = malloc(length);
@@ -365,6 +372,13 @@ static void* dmi_table_smbios30(fwts_framework *fw, fwts_smbios30_entry *entry)
 	void *table;
 	void *mem;
 	char anchor[8];
+
+	/* 64 bit entry sanity check on length */
+	if ((length == 0) || (length > 0xffffff)) {
+		fwts_log_info(fw, "SMBIOS table size of %zu bytes looks "
+			"suspicious",  length);
+		return NULL;
+	}
 
 	mem = fwts_mmap(addr, length);
 	if (mem != FWTS_MAP_FAILED) {
@@ -1171,7 +1185,7 @@ static void dmicheck_entry(fwts_framework *fw,
 			dmi_str_check(fw, table, addr, "Part Number", hdr, 0x22);
 			if (hdr->length < 0x28)
 				break;
-			if (GET_UINT16(data + 0x26) & 0xf0)
+			if (GET_UINT16(data + 0x26) & 0xff00)
 				fwts_failed(fw, LOG_LEVEL_MEDIUM, DMI_RESERVED_VALUE_USED,
 					"Reserved bits 0x%4.4" PRIx16 " was used"
 					"bits 8..15 would be reserved while accessing entry '%s' @ "

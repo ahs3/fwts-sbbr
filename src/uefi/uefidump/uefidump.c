@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Canonical
+ * Copyright (C) 2010-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -146,6 +146,13 @@ static char *uefidump_build_dev_path(char *path, fwts_uefi_dev_path *dev_path, c
 				fwts_uefi_controller_dev_path *c = (fwts_uefi_controller_dev_path*)dev_path;
 				path = uefidump_vprintf(path, "\\Controller(0x%" PRIx32 ")",
 					c->controller);
+			}
+			break;
+		case FWTS_UEFI_BMC_DEV_PATH_SUBTYPE:
+			if (dev_path_len >= sizeof(fwts_uefi_bmc_dev_path)) {
+				fwts_uefi_bmc_dev_path *b = (fwts_uefi_bmc_dev_path *)dev_path;
+				path = uefidump_vprintf(path, "\\BMC(0x%" PRIx8 ",0x%" PRIx64 ")",
+					b->interface_type, b->base_addr);
 			}
 			break;
 		default:
@@ -477,6 +484,49 @@ static char *uefidump_build_dev_path(char *path, fwts_uefi_dev_path *dev_path, c
 					n->namesp_id, n->ext_unique_id);
 			}
 			break;
+		case FWTS_UEFI_URI_DEVICE_PATH_SUBTYPE:
+			if (dev_path_len >= sizeof(fwts_uefi_uri_dev_path)) {
+				fwts_uefi_uri_dev_path *u = (fwts_uefi_uri_dev_path *)dev_path;
+				uint16_t len = u->dev_path.length[0] | (((uint16_t)u->dev_path.length[1]) << 8);
+				if ((len > sizeof(fwts_uefi_uri_dev_path)) &&
+				    (len <= dev_path_len - sizeof(fwts_uefi_uri_dev_path))) {
+					uint16_t tmp_len = len - sizeof(fwts_uefi_uri_dev_path);
+					char tmp[tmp_len + 1];
+
+					memcpy(tmp, u->uri, tmp_len);
+					tmp[tmp_len] = '\0';
+					path = uefidump_vprintf(path, "\\URI(%s)", tmp);
+				}
+			}
+			break;
+		case FWTS_UEFI_UFS_DEVICE_PATH_SUBTYPE:
+			if (dev_path_len >= sizeof(fwts_uefi_ufs_dev_path)) {
+				fwts_uefi_ufs_dev_path *u = (fwts_uefi_ufs_dev_path *)dev_path;
+				path = uefidump_vprintf(path, "\\UFS(0x%" PRIx8 ",0x%" PRIx8 ")",
+					u->target_id, u->lun);
+			}
+			break;
+		case FWTS_UEFI_SD_DEVICE_PATH_SUBTYPE:
+			if (dev_path_len >= sizeof(fwts_uefi_sd_dev_path)) {
+				fwts_uefi_sd_dev_path *s = (fwts_uefi_sd_dev_path *)dev_path;
+				path = uefidump_vprintf(path, "\\SD(0x%" PRIx8 ")", s->slot_number);
+			}
+			break;
+		case FWTS_UEFI_BLUETOOTH_DEVICE_PATH_SUBTYPE:
+			if (dev_path_len >= sizeof(fwts_uefi_bluetooth_dev_path)) {
+				fwts_uefi_bluetooth_dev_path *b = (fwts_uefi_bluetooth_dev_path *)dev_path;
+				path = uefidump_vprintf(path, "\\BT("
+					"%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 ")",
+					b->bluetooth_addr[0], b->bluetooth_addr[1], b->bluetooth_addr[2],
+					b->bluetooth_addr[3], b->bluetooth_addr[4], b->bluetooth_addr[5]);
+			}
+			break;
+		case FWTS_UEFI_WIRELESS_DEVICE_PATH_SUBTYPE:
+			if (dev_path_len > sizeof(fwts_uefi_wireless_dev_path)) {
+				fwts_uefi_wireless_dev_path *w = (fwts_uefi_wireless_dev_path *)dev_path;
+				path = uefidump_vprintf(path, "\\WiFi(%s)", w->ssid);
+			}
+			break;
 		default:
 			path = uefidump_vprintf(path, "\\Unknown-MESSAGING-DEV-PATH(0x%" PRIx8 ")", dev_path->subtype);
 			break;
@@ -579,6 +629,23 @@ static char *uefidump_build_dev_path(char *path, fwts_uefi_dev_path *dev_path, c
 				path = uefidump_vprintf(path, "\\RELATIVEOFFSETRANGE("
 					"0x%" PRIx64 ",0x%" PRIx64 ")",
 					r->starting_offset, r->ending_offset);
+			}
+			break;
+		case FWTS_UEFI_RAM_DISK_SUBTYPE:
+			if (dev_path_len >= sizeof(fwts_ram_disk_path)) {
+				fwts_ram_disk_path *r = (fwts_ram_disk_path *)dev_path;
+				path = uefidump_vprintf(path, "\\RAMDISK("
+					"0x%" PRIx64 ",0x%" PRIx64
+					"%08" PRIx32 "-%04" PRIx16 "-%04" PRIx16 "-"
+					"%02" PRIx8 "-%02" PRIx8 "-"
+					"%02" PRIx8 "-%02" PRIx8 "-%02" PRIx8 "-%02" PRIx8 "-%02" PRIx8 "-%02" PRIx8
+					",0x%" PRIx16 ")",
+					r->starting_addr, r->ending_addr,
+					r->disk_type_guid.info1, r->disk_type_guid.info2, r->disk_type_guid.info3,
+					r->disk_type_guid.info4[0], r->disk_type_guid.info4[1], r->disk_type_guid.info4[2],
+					r->disk_type_guid.info4[3], r->disk_type_guid.info4[4], r->disk_type_guid.info4[5],
+					r->disk_type_guid.info4[6], r->disk_type_guid.info4[7],
+					r->disk_instance);
 			}
 			break;
 		default:
@@ -1193,6 +1260,91 @@ static void uefidump_info_signaturedatabase(fwts_framework *fw, fwts_uefi_var *v
 	} while ((var->datalen - list_start) > sizeof(fwts_uefi_signature_list));
 
 }
+
+static void uefidump_info_audit_mode(fwts_framework *fw, fwts_uefi_var *var)
+{
+	if (var->datalen != 1) {
+		/* Should be 1 byte, of not, dump it out as a hex dump */
+		uefidump_var_hexdump(fw, var);
+	} else {
+		char *mode;
+		uint8_t value = (uint8_t)var->data[0];
+
+		switch (value) {
+		case 0:
+			mode = " (Not in Audit Mode)";
+			break;
+		case 1:
+			mode = " (In Audit Mode)";
+			break;
+		default:
+			mode = "";
+			break;
+		}
+		fwts_log_info_verbatum(fw, "  Value: 0x%2.2x%s.", value, mode);
+	}
+}
+
+static void uefidump_info_deployed_mode(fwts_framework *fw, fwts_uefi_var *var)
+{
+	if (var->datalen != 1) {
+		/* Should be 1 byte, of not, dump it out as a hex dump */
+		uefidump_var_hexdump(fw, var);
+	} else {
+		char *mode;
+		uint8_t value = (uint8_t)var->data[0];
+
+		switch (value) {
+		case 0:
+			mode = " (Not in Deployed Mode)";
+			break;
+		case 1:
+			mode = " (In Deployed Mode)";
+			break;
+		default:
+			mode = "";
+			break;
+		}
+		fwts_log_info_verbatum(fw, "  Value: 0x%2.2x%s.", value, mode);
+	}
+}
+
+static void uefidump_info_osrecoverorder(fwts_framework *fw, fwts_uefi_var *var)
+{
+	if (var->datalen % 16) {
+		/* Should be multiple of 16 bytes, of not, dump it out as a hex dump */
+		uefidump_var_hexdump(fw, var);
+	} else {
+		/* OSRecoveryOrder are an array of GUIDs */
+		uint8_t *data = var->data;
+		char guid_str[37];
+
+		if (var->datalen)
+			fwts_log_info_verbatum(fw, "  OSRecoveryOrder GUIDs:");
+
+		while (data - var->data < (ptrdiff_t)var->datalen) {
+			fwts_guid_buf_to_str(data, guid_str, sizeof(guid_str));
+			fwts_log_info_verbatum(fw, "    %s", guid_str);
+			data += 16;
+		}
+	}
+}
+
+static void uefidump_info_syspreporder(fwts_framework *fw, fwts_uefi_var *var)
+{
+	uint16_t *data = (uint16_t*)var->data;
+	int i;
+	int n = (int)var->datalen / sizeof(uint16_t);
+	char *str = NULL;
+
+	for (i = 0; i < n; i++) {
+		str = uefidump_vprintf(str, "0x%04" PRIx16 "%s",
+			*data++, i < (n - 1) ? "," : "");
+	}
+	fwts_log_info_verbatum(fw, "  SysPrep Order: %s.", str);
+	free(str);
+}
+
 static uefidump_info uefidump_info_table[] = {
 	{ "PlatformLangCodes",	uefidump_info_platform_langcodes },
 	{ "PlatformLang",	uefidump_info_platform_lang },
@@ -1223,6 +1375,10 @@ static uefidump_info uefidump_info_table[] = {
 	{ "db",			uefidump_info_signaturedatabase },
 	{ "KEK",		uefidump_info_signaturedatabase },
 	{ "PK",			uefidump_info_signaturedatabase },
+	{ "AuditMode",		uefidump_info_audit_mode },
+	{ "DeployedMode",	uefidump_info_deployed_mode },
+	{ "OsRecoveryOrder",	uefidump_info_osrecoverorder },
+	{ "SysPrepOrder",	uefidump_info_syspreporder },
 	{ NULL, NULL }
 };
 
@@ -1268,6 +1424,27 @@ static void uefidump_var(fwts_framework *fw, fwts_uefi_var *var)
 			&& isxdigit(varname[3]) && isxdigit(varname[4])
 			&& isxdigit(varname[5]) && isxdigit(varname[6])) {
 		uefidump_info_keyoption(fw, var);
+		return;
+	}
+
+	/*
+	 * Check the platformRecovery of boot option PlatformRecovery####. #### is a printed hex value.
+	 * PlatformRecovery#### variables share the same structure as Boot#### variables.
+	 */
+	if ((strlen(varname) == 20) && (strncmp(varname, "PlatformRecovery", 16) == 0)
+			&& isxdigit(varname[16]) && isxdigit(varname[17])
+			&& isxdigit(varname[18]) && isxdigit(varname[19])) {
+		uefidump_info_bootdev(fw, var);
+		return;
+	}
+
+	/*
+	 * Check the System Prep application load option SysPrep####. #### is a printed hex value.
+	 */
+	if ((strlen(varname) == 11) && (strncmp(varname, "SysPrep", 7) == 0)
+			&& isxdigit(varname[7]) && isxdigit(varname[8])
+			&& isxdigit(varname[9]) && isxdigit(varname[10])) {
+		uefidump_info_bootdev(fw, var);
 		return;
 	}
 

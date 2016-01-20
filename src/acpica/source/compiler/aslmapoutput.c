@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -525,7 +525,7 @@ MpEmitDeviceTree (
     /* Walk the namespace from the root */
 
     (void) AcpiNsWalkNamespace (ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT,
-            ACPI_UINT32_MAX, FALSE, MpEmitOneDevice, NULL, NULL, NULL);
+        ACPI_UINT32_MAX, FALSE, MpEmitOneDevice, NULL, NULL, NULL);
 }
 
 

@@ -5,10 +5,8 @@ Source: git://kernel.ubuntu.com/hwe/fwts
 Files: *
        src/acpica/source/compiler/fwts_iasl_interface.c
        src/acpica/source/compiler/fwts_iasl_interface.h
-Copyright: 2010-2015, Canonical Ltd
+Copyright: 2010-2016, Canonical Ltd
 License: GPL-2
- On Debian systems, the complete text of the GNU General Public
- License can be found in `/usr/share/common-licenses/GPL-2'.
 
 Files: src/acpi/acpiinfo/acpiinfo.c
        src/acpi/battery/battery.c
@@ -26,33 +24,27 @@ Files: src/acpi/acpiinfo/acpiinfo.c
        src/lib/include/fwts_e820.h
        src/lib/src/e820.c
        src/pci/maxreadreq/maxreadreq.c
-Copyright: 2010-2015, Canonical Ltd
+Copyright: 2010-2016, Canonical Ltd
            2006, Intel Corporation
 License: GPL-2
- On Debian systems, the complete text of the GNU General Public
- License can be found in `/usr/share/common-licenses/GPL-2'.
 
 Files: src/cpu/virt/virt.c
        src/lib/include/fwts_virt.h
        src/lib/src/virt.c
-Copyright: 2010-2015, Canonical Ltd
+Copyright: 2010-2016, Canonical Ltd
            2007, AMD Inc
            2006, Intel Corporation
 License: GPL-2
- On Debian systems, the complete text of the GNU General Public
- License can be found in `/usr/share/common-licenses/GPL-2'.
 
 Files: src/lib/src/fwts_pipeio.c
        src/lib/src/fwts_stringextras.c
-Copyright: 2010-2015, Canonical Ltd
+Copyright: 2010-2016, Canonical Ltd
            2010, Lennart Poettering
 License: GPL-2
- On Debian systems, the complete text of the GNU General Public
- License can be found in `/usr/share/common-licenses/GPL-2'.
 
 Files: src/cpu/virt/virt_svm.c
        src/cpu/virt/virt_vmx.c
-Copyright: 2010-2015, Canonical Ltd
+Copyright: 2010-2016, Canonical Ltd
            2007, AMD Inc
            2006, Intel Corporation
 License: LGPL
@@ -60,7 +52,7 @@ License: LGPL
  License can be found in `/usr/share/common-licenses/LGPL'.
 
 Files: src/acpcia/source/*
-Copyright: Copyright (c) 1999 - 2015, Intel Corp.
+Copyright: Copyright (c) 1999 - 2016, Intel Corp.
 License: other
    2. License
    .
@@ -161,3 +153,7 @@ License: other
    United States government or any agency thereof requires an export license,
    other governmental approval, or letter of assurance, without first obtaining
    such license, approval or letter.
+
+License: GPL-2
+ On Debian systems, the complete text of the GNU General Public
+ License can be found in `/usr/share/common-licenses/GPL-2'.

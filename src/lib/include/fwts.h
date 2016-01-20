@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Canonical
+ * Copyright (C) 2010-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -47,6 +47,7 @@
 #include "fwts_acpi.h"
 #include "fwts_acpi_tables.h"
 #include "fwts_acpid.h"
+#include "fwts_arch.h"
 #include "fwts_checkeuid.h"
 #include "fwts_cpu.h"
 #include "fwts_dump.h"

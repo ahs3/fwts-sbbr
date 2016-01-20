@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -536,7 +536,7 @@ AcpiDmDescendingOp (
         if (Info->WalkState)
         {
             AmlOffset = (UINT32) ACPI_PTR_DIFF (Op->Common.Aml,
-                            Info->WalkState->ParserState.AmlStart);
+                Info->WalkState->ParserState.AmlStart);
             if (AcpiGbl_DmOpt_Verbose)
             {
                 AcpiOsPrintf (DB_FULL_OP_INFO,
@@ -559,40 +559,41 @@ AcpiDmDescendingOp (
         }
     }
     else if ((AcpiDmBlockType (Op->Common.Parent) & BLOCK_BRACE) &&
-             (!(Op->Common.DisasmFlags & ACPI_PARSEOP_PARAMLIST)) &&
-             (Op->Common.AmlOpcode != AML_INT_BYTELIST_OP))
+         (!(Op->Common.DisasmFlags & ACPI_PARSEOP_PARAMLIST)) &&
+         (!(Op->Common.DisasmFlags & ACPI_PARSEOP_ELSEIF)) &&
+         (Op->Common.AmlOpcode != AML_INT_BYTELIST_OP))
     {
+        /*
+         * This is a first-level element of a term list,
+         * indent a new line
+         */
+        switch (Op->Common.AmlOpcode)
+        {
+        case AML_NOOP_OP:
             /*
-             * This is a first-level element of a term list,
-             * indent a new line
+             * Optionally just ignore this opcode. Some tables use
+             * NoOp opcodes for "padding" out packages that the BIOS
+             * changes dynamically. This can leave hundreds or
+             * thousands of NoOp opcodes that if disassembled,
+             * cannot be compiled because they are syntactically
+             * incorrect.
              */
-            switch (Op->Common.AmlOpcode)
+            if (AcpiGbl_IgnoreNoopOperator)
             {
-            case AML_NOOP_OP:
-                /*
-                 * Optionally just ignore this opcode. Some tables use
-                 * NoOp opcodes for "padding" out packages that the BIOS
-                 * changes dynamically. This can leave hundreds or
-                 * thousands of NoOp opcodes that if disassembled,
-                 * cannot be compiled because they are syntactically
-                 * incorrect.
-                 */
-                if (AcpiGbl_IgnoreNoopOperator)
-                {
-                    Op->Common.DisasmFlags |= ACPI_PARSEOP_IGNORE;
-                    return (AE_OK);
-                }
-
-                /* Fallthrough */
-
-            default:
-
-                AcpiDmIndent (Level);
-                break;
+                Op->Common.DisasmFlags |= ACPI_PARSEOP_IGNORE;
+                return (AE_OK);
             }
 
-            Info->LastLevel = Level;
-            Info->Count = 0;
+            /* Fallthrough */
+
+        default:
+
+            AcpiDmIndent (Level);
+            break;
+        }
+
+        Info->LastLevel = Level;
+        Info->Count = 0;
     }
 
     /*
@@ -978,8 +979,8 @@ AcpiDmAscendingOp (
         if (!AcpiDmCommaIfListMember (Op))
         {
             if ((AcpiDmBlockType (Op->Common.Parent) & BLOCK_BRACE) &&
-                     (!(Op->Common.DisasmFlags & ACPI_PARSEOP_PARAMLIST)) &&
-                     (Op->Common.AmlOpcode != AML_INT_BYTELIST_OP))
+                 (!(Op->Common.DisasmFlags & ACPI_PARSEOP_PARAMLIST)) &&
+                 (Op->Common.AmlOpcode != AML_INT_BYTELIST_OP))
             {
                 /*
                  * This is a first-level element of a term list
@@ -1040,8 +1041,8 @@ AcpiDmAscendingOp (
         if (!AcpiDmCommaIfListMember (Op))
         {
             if ((AcpiDmBlockType (Op->Common.Parent) & BLOCK_BRACE) &&
-                     (!(Op->Common.DisasmFlags & ACPI_PARSEOP_PARAMLIST)) &&
-                     (Op->Common.AmlOpcode != AML_INT_BYTELIST_OP))
+                 (!(Op->Common.DisasmFlags & ACPI_PARSEOP_PARAMLIST)) &&
+                 (Op->Common.AmlOpcode != AML_INT_BYTELIST_OP))
             {
                 /*
                  * This is a first-level element of a term list

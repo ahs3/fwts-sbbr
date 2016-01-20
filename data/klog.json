@@ -3,6 +3,132 @@
  [ 
   {
    "compare_mode": "string",
+   "log_level": "LOG_LEVEL_MEDIUM",
+   "pattern": "Could not start debugger thread",
+   "advice": "The ACPI debugger could not start a kernel thread to execute a debug command, most probably a kernel resource issue.",
+   "label": "KlogAcpiDbgThreadErr",
+  },
+  {
+   "compare_mode": "string",
+   "log_level": "LOG_LEVEL_MEDIUM",
+   "pattern": "Possible overflow of internal debugger buffer",
+   "advice": "The ACPI debugger detected a error when evaluating an ACPI object or method, possibly a buffer overflow bug in the ACPI debugger.",
+   "label": "KlogAcpiDbgBufOverflow",
+  },
+  {
+   "compare_mode": "regex",
+   "log_level": "LOG_LEVEL_MEDIUM",
+   "pattern": "while executing .* from debugger",
+   "advice": "The ACPI debugger detected a error when evaluating an ACPI object or method.",
+   "label": "KlogAcpiDbgErr",
+  },
+  {
+   "compare_mode": "string",
+   "log_level": "LOG_LEVEL_LOW",
+   "pattern": "While parsing method arguments",
+   "advice": "The ACPI debugger could not parse the debugger command line (incorrect method arguments), most probably a user error.",
+   "label": "KlogAcpiDbgCmdLine",
+  },
+  {
+   "compare_mode": "string",
+   "log_level": "LOG_LEVEL_LOW",
+   "pattern": "While parsing command line",
+   "advice": "The ACPI debugger could not parse the debugger command line, most probably a user error.",
+   "label": "KlogAcpiDbgCmdLine",
+  },
+  {
+   "compare_mode": "regex",
+   "log_level": "LOG_LEVEL_MEDIUM",
+   "pattern": "(.*): Object must be a control method",
+   "advice": "An error occurred disassembling an ACPI method, the namespace node was not an ACPI method.",
+   "label": "KlogAcpiObjNotControlMethod"
+  },
+  {
+   "compare_mode": "string",
+   "log_level": "LOG_LEVEL_MEDIUM",
+   "pattern": "Target must be [Buffer/Integer/String/Reference]",
+   "advice": "An error occurred storing an ACPI object that was not the expected object type of ACPU buffer, integer, string or reference.",
+   "label": "KlogAcpiObjStoreInvalidSrcType"
+  },
+  {
+   "compare_mode": "regex",
+   "log_level": "LOG_LEVEL_MEDIUM",
+   "pattern": "Cannot assign type .* to .*source must be type Pkg",
+   "advice": "An error occurred storing an ACPI object that was not an ACPI package to a named object that was an ACPI package, this is not allowed.",
+   "label": "KlogAcpiObjStoreInvalidSrcType"
+  },
+  {
+   "compare_mode": "string",
+   "log_level": "LOG_LEVEL_MEDIUM",
+   "pattern": "Invalid _FIT",
+   "advice": "ACPI _FIT (Firmware Interface Table) method returned an object that was not the expected ACPI buffer object type.",
+   "label": "KlogAcpiInvalidFitObject"
+  },
+  {
+   "compare_mode": "regex",
+   "log_level": "LOG_LEVEL_MEDIUM",
+   "pattern": "Target is not of type .*Package.*BufferField",
+   "advice": "ACPI execution engine failed to store a value in an ACPI buffer or Package Element because the destination type was incorrect. The AML code in the firmware has a bug.",
+   "label": "KlogAcpiInvalidDestinationType"
+  },
+  {
+   "compare_mode": "regex",
+   "log_level": "LOG_LEVEL_MEDIUM",
+   "pattern": "Source must be type .*Integer.*Buffer.*String.*, found",
+   "advice": "ACPI execution engine failed to store a value in an ACPI buffer or Package Element because the source type was incorrect. The AML code in the firmware has a bug.",
+   "label": "KlogAcpiInvalidSourceType"
+  },
+  {
+   "compare_mode": "string",
+   "log_level": "LOG_LEVEL_MEDIUM",
+   "pattern": "During invocation of sleep state",
+   "advice": "Invoking one of the ACPI sleep states (S0 through to S5) failed to complete, either when trying to transition to the sleep state or returning from it.",
+   "label": "KlogAcpiSleepError"
+  },
+  {
+   "compare_mode": "string",
+   "log_level": "LOG_LEVEL_MEDIUM",
+   "pattern": "No IRQ available for",
+   "advice": "The ACPI driver failed to allocate an IRQ to a PCI link, possibly because of prevous IRQ allocations that have precedence. A workaround is to use kernel parameter pci=noacpi or acpi=off",
+   "label": "KlogAcpiPciLinkIrq"
+  },
+  {
+   "compare_mode": "string",
+   "log_level": "LOG_LEVEL_MEDIUM",
+   "pattern": "ACPI: Invalid data",
+   "advice": "ACPI _BCL method (Query List of Brightness Control Levels Supported) returned a package that did not contain integer brightness levels",
+   "label": "KlogAcpiBclInvalidData"
+  },
+  {
+   "compare_mode": "string",
+   "log_level": "LOG_LEVEL_HIGH",
+   "pattern": "failed to merge updated NFIT",
+   "advice": "ACPI NFIT driver failed to merge the new NFIT from the _FIT object and resorted to using the previous (old) one instead",
+   "label": "KlogAcpiNfitMergeError"
+  },
+  {
+   "compare_mode": "string",
+   "log_level": "LOG_LEVEL_HIGH",
+   "pattern": "failed to evaluate _FIT",
+   "advice": "ACPI NFIT driver failed to evaluate the _FIT (Firmware Interface Table) object and no buffer was returned causing the NFIT notify event to fail",
+   "label": "KlogAcpiFitEvalError"
+  },
+  {
+   "compare_mode": "string",
+   "log_level": "LOG_LEVEL_HIGH",
+   "pattern": "error initializing acpi_desc:",
+   "advice": "ACPI NFIT driver failed to initialize, either because it was out of memory (unlikely) or the NVDIMM bus failed to register",
+   "label": "KlogAcpiNfitInitFail"
+  },
+  {
+   "compare_mode": "string",
+   "log_level": "LOG_LEVEL_HIGH",
+   "pattern": "new nfit deletes entries",
+   "advice": "ACPI NFIT driver could not delete NFIT structure entries, this is funcionality is not currently supported by the ACPI NFIT driver",
+   "label": "KlogAcpiNfitDeleteNoSupport"
+  },
+  {
+   "compare_mode": "string",
    "log_level": "LOG_LEVEL_HIGH",
    "pattern": "failed to find NFIT",
    "advice": "ACPI NFIT driver could not find an ACPI NFIT table",

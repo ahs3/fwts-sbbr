@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Canonical
+ * Copyright (C) 2010-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,6 +44,14 @@ static const char *summary_names[] = {
 	"Medium",
 	"Low",
 	"Other"
+};
+
+static const int summary_levels[] = {
+	LOG_LEVEL_CRITICAL,
+	LOG_LEVEL_HIGH,
+	LOG_LEVEL_MEDIUM,
+	LOG_LEVEL_LOW,
+	LOG_LEVEL_NONE
 };
 
 /* list of summary items per error level */
@@ -127,7 +135,8 @@ int fwts_summary_add(
 	bool summary_item_found = false;
 	int index = fwts_summary_level_to_index(level);
 
-	FWTS_UNUSED(fw);
+	if (FWTS_LEVEL_IGNORE(fw, level))
+		return FWTS_OK;
 
 	/* Does the text already exist? - search for it */
 	fwts_list_foreach(item, fwts_summaries[index]) {
@@ -186,7 +195,10 @@ int fwts_summary_report(fwts_framework *fw, fwts_list *test_list)
 	fwts_log_underline(fw->results, '=');
 	fwts_log_nl(fw);
 
-	for (i=0;i<SUMMARY_MAX;i++) {
+	for (i = 0; i < SUMMARY_MAX; i++) {
+		if (FWTS_LEVEL_IGNORE(fw, summary_levels[i]))
+			continue;
+
 		fwts_log_section_begin(fw->results, "failure");
 
 		if (fwts_summaries[i]->len) {

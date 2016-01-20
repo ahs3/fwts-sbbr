@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -1052,7 +1052,8 @@ AcpiDbEvaluateAllPredefinedNames (
         ACPI_UINT32_MAX, AcpiDbEvaluateOnePredefinedName, NULL,
         (void *) &Info, NULL);
 
-    AcpiOsPrintf ("Evaluated %u predefined names in the namespace\n", Info.Count);
+    AcpiOsPrintf (
+        "Evaluated %u predefined names in the namespace\n", Info.Count);
 }
 
 
@@ -1105,7 +1106,7 @@ AcpiDbEvaluateOnePredefinedName (
         return (AE_OK);
     }
 
-    Pathname = AcpiNsGetExternalPathname (Node);
+    Pathname = AcpiNsGetNormalizedPathname (Node, TRUE);
     if (!Pathname)
     {
         return (AE_OK);

@@ -9,7 +9,7 @@ NoEcho('
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -126,10 +126,11 @@ NoEcho('
  * Root term. Allow multiple #line directives before the definition block
  * to handle output from preprocessors
  */
-ASLCode
-    : DefinitionBlockTerm
+AslCode
+    : DefinitionBlockList           {$<n>$ = TrLinkChildren (TrCreateLeafNode (PARSEOP_ASL_CODE),1, $1);}
     | error                         {YYABORT; $$ = NULL;}
     ;
+
 
 /*
  * Note concerning support for "module-level code".
@@ -147,7 +148,7 @@ ASLCode
  * of Type1 and Type2 opcodes at module level.
  */
 DefinitionBlockTerm
-    : PARSEOP_DEFINITIONBLOCK '('   {$<n>$ = TrCreateLeafNode (PARSEOP_DEFINITIONBLOCK);}
+    : PARSEOP_DEFINITION_BLOCK '('  {$<n>$ = TrCreateLeafNode (PARSEOP_DEFINITION_BLOCK);}
         String ','
         String ','
         ByteConst ','
@@ -156,6 +157,12 @@ DefinitionBlockTerm
         DWordConst
         ')'                         {TrSetEndLineNumber ($<n>3);}
             '{' TermList '}'        {$$ = TrLinkChildren ($<n>3,7,$4,$6,$8,$10,$12,$14,$18);}
+    ;
+
+DefinitionBlockList
+    : DefinitionBlockTerm
+    | DefinitionBlockTerm
+        DefinitionBlockList         {$$ = TrLinkPeerNodes (2, $1,$2);}
     ;
 
 SuperName
@@ -492,6 +499,7 @@ String
 
 CompilerDirective
     : IncludeTerm                   {}
+    | IncludeEndTerm                {}
     | ExternalTerm                  {}
     ;
 
@@ -1098,14 +1106,13 @@ IfTerm
     ;
 
 IncludeTerm
-    : PARSEOP_INCLUDE '('           {$<n>$ = TrCreateLeafNode (PARSEOP_INCLUDE);}
-        String  ')'                 {TrLinkChildren ($<n>3,1,$4);FlOpenIncludeFile ($4);}
-        TermList
-        IncludeEndTerm              {$$ = TrLinkPeerNodes (3,$<n>3,$7,$8);}
+    : PARSEOP_INCLUDE '('
+        String  ')'                 {$$ = TrUpdateNode (PARSEOP_INCLUDE, $3);
+                                        FlOpenIncludeFile ($3);}
     ;
 
 IncludeEndTerm
-    : PARSEOP_INCLUDE_END           {$$ = TrCreateLeafNode (PARSEOP_INCLUDE_END);}
+    : PARSEOP_INCLUDE_END           {$<n>$ = TrCreateLeafNode (PARSEOP_INCLUDE_END); TrSetCurrentFilename ($$);}
     ;
 
 IncTerm

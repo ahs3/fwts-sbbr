@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Canonical
+ * Copyright (C) 2011-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -56,7 +56,7 @@ static int ebdadump_test1(fwts_framework *fw)
 		return FWTS_ERROR;
 	}
 
-        if ((mem = fwts_mmap(ebda_addr, len)) == MAP_FAILED) {
+        if ((mem = fwts_mmap(ebda_addr, len)) == FWTS_MAP_FAILED) {
 		fwts_log_error(fw, "Cannot mmap BIOS ROM region.");
 		return FWTS_ERROR;
 	}

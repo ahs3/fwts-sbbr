@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -757,6 +757,7 @@ AcpiDmGetCompoundSymbol (
     default:
 
         /* No operator string for all other opcodes */
+
         return (NULL);
     }
 

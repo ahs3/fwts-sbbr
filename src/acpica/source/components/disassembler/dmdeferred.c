@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -177,7 +177,8 @@ AcpiDmParseDeferredOps (
         case AML_PACKAGE_OP:
         case AML_VAR_PACKAGE_OP:
 
-            Status = AcpiDmDeferredParse (Op, Op->Named.Data, Op->Named.Length);
+            Status = AcpiDmDeferredParse (
+                Op, Op->Named.Data, Op->Named.Length);
             if (ACPI_FAILURE (Status))
             {
                 return (Status);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2015 Canonical
+ * Copyright (C) 2012-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -867,7 +867,7 @@ static int setvariable_insertvariable(
 	uint64_t status;
 	uint64_t dataindex;
 
-	uint8_t data[datasize];
+	uint8_t data[datasize + 1];
 
 	for (dataindex = 0; dataindex < datasize; dataindex++)
 		data[dataindex] = (uint8_t)dataindex + datadiff;

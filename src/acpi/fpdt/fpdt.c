@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Canonical
+ * Copyright (C) 2015-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -203,6 +203,10 @@ static int fpdt_test1(fwts_framework *fw)
 			break;
 		}
 		ptr += fpdt->length;
+
+		/* terminate loop for buggy BIOS */
+		if (fpdt->length == 0)
+			break;
 	}
 
 done:

@@ -261,13 +261,16 @@ static ACPI_STATUS fwts_region_handler(
 	ACPI_CONNECTION_INFO    *context;
 	int			i;
 
+	if (!regionobject)
+		return AE_BAD_PARAMETER;
+	if (!value)
+		return AE_BAD_PARAMETER;
 	if (regionobject->Region.Type != ACPI_TYPE_REGION)
 		return AE_OK;
 
 	fwts_acpi_region_handler_called_set(true);
 
 	context = ACPI_CAST_PTR (ACPI_CONNECTION_INFO, handlercontext);
-	length = (ACPI_SIZE)regionobject->Region.Length;
 
 	switch (regionobject->Region.SpaceId) {
 	case ACPI_ADR_SPACE_SYSTEM_IO:
@@ -306,6 +309,8 @@ static ACPI_STATUS fwts_region_handler(
 			case AML_FIELD_ATTRIB_MULTIBYTE:
 			case AML_FIELD_ATTRIB_RAW_BYTES:
 			case AML_FIELD_ATTRIB_RAW_PROCESS:
+				if (!context)
+					return AE_BAD_PARAMETER;
 				length = context->AccessLength - 2;
 				break;
 			default:
@@ -331,6 +336,8 @@ static ACPI_STATUS fwts_region_handler(
 			case AML_FIELD_ATTRIB_MULTIBYTE:
 			case AML_FIELD_ATTRIB_RAW_BYTES:
 			case AML_FIELD_ATTRIB_RAW_PROCESS:
+				if (!context)
+					return AE_BAD_PARAMETER;
 				length = context->AccessLength - 2;
 				break;
 			default:
@@ -1091,6 +1098,8 @@ int fwts_acpica_init(fwts_framework *fw)
 	} else {
 		fwts_acpica_RSDP = NULL;
 	}
+
+	AcpiGbl_OverrideDefaultRegionHandlers = TRUE;
 
 	if (ACPI_FAILURE(AcpiInitializeSubsystem())) {
 		fwts_log_error(fw, "Failed to initialise ACPICA subsystem.");

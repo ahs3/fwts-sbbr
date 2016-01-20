@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -127,7 +127,6 @@ FlOpenIncludeWithPrefix (
     char                    *PrefixDir,
     ACPI_PARSE_OBJECT       *Op,
     char                    *Filename);
-
 
 #ifdef ACPI_OBSOLETE_FUNCTIONS
 ACPI_STATUS
@@ -334,7 +333,8 @@ FlMergePathnames (
     /* Build the final merged pathname */
 
 ConcatenatePaths:
-    Pathname = UtStringCacheCalloc (strlen (CommonPath) + strlen (FilePathname) + 2);
+    Pathname = UtStringCacheCalloc (
+        strlen (CommonPath) + strlen (FilePathname) + 2);
     if (LastElement && *CommonPath)
     {
         strcpy (Pathname, CommonPath);
@@ -408,6 +408,7 @@ FlOpenIncludeWithPrefix (
      */
     Gbl_CurrentLineNumber--;
     OriginalLineNumber = Gbl_CurrentLineNumber;
+
     while (DtGetNextLine (IncludeFile, DT_ALLOW_MULTILINE_QUOTES) != ASL_EOF)
     {
         if (Gbl_CurrentLineBuffer[0] == '#')
@@ -416,6 +417,7 @@ FlOpenIncludeWithPrefix (
                 Op, "use #include instead");
         }
     }
+
     Gbl_CurrentLineNumber = OriginalLineNumber;
 
     /* Must seek back to the start of the file */
@@ -494,7 +496,8 @@ FlOpenIncludeFile (
      *
      * Construct the file pathname from the global directory name.
      */
-    IncludeFile = FlOpenIncludeWithPrefix (Gbl_DirectoryPath, Op, Op->Asl.Value.String);
+    IncludeFile = FlOpenIncludeWithPrefix (
+        Gbl_DirectoryPath, Op, Op->Asl.Value.String);
     if (IncludeFile)
     {
         return;
@@ -507,7 +510,8 @@ FlOpenIncludeFile (
     NextDir = Gbl_IncludeDirList;
     while (NextDir)
     {
-        IncludeFile = FlOpenIncludeWithPrefix (NextDir->Dir, Op, Op->Asl.Value.String);
+        IncludeFile = FlOpenIncludeWithPrefix (
+            NextDir->Dir, Op, Op->Asl.Value.String);
         if (IncludeFile)
         {
             return;
@@ -640,7 +644,7 @@ FlOpenMiscOutputFiles (
 
     /* All done for disassembler */
 
-    if (Gbl_FileType == ASL_INPUT_TYPE_ACPI_TABLE)
+    if (Gbl_FileType == ASL_INPUT_TYPE_BINARY_ACPI_TABLE)
     {
         return (AE_OK);
     }

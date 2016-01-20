@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Canonical
+ * Copyright (C) 2014-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -62,7 +62,7 @@ static int uefibootpath_check_dev_path(fwts_framework *fw, fwts_uefi_dev_path *d
 			}
 			break;
 		default:
-			fwts_log_info_verbatum(fw, "Unknow subtype of End of Hardware Device Path.");
+			fwts_log_info_verbatum(fw, "Unknown subtype of End of Hardware Device Path.");
 			break;
 		}
 		break;
@@ -119,8 +119,26 @@ static int uefibootpath_check_dev_path(fwts_framework *fw, fwts_uefi_dev_path *d
 				errors++;
 			}
 			break;
+		case FWTS_UEFI_BMC_DEV_PATH_SUBTYPE:
+			if (len != sizeof(fwts_uefi_bmc_dev_path)) {
+				fwts_failed(fw, LOG_LEVEL_MEDIUM, "UEFIBMCDevPathLength",
+					"The length of BMC Device Path is %" PRIu16 " bytes "
+					"and differs from UEFI specification defined %" PRIu16 " bytes.",
+					len,
+					(uint16_t)sizeof(fwts_uefi_bmc_dev_path));
+				errors++;
+			}
+
+			fwts_uefi_bmc_dev_path *b = (fwts_uefi_bmc_dev_path *)dev_path;
+			if (b->interface_type > 3) {
+				fwts_failed(fw, LOG_LEVEL_MEDIUM, "UEFIBMCDevPathIntfTypeInvalid",
+					"The definition on interface type of BMC Device Path is 0-3"
+					", which is out of the defined range.");
+				errors++;
+			}
+			break;
 		default:
-			fwts_log_info_verbatum(fw, "Unknow subtype of Hardware Device Path.");
+			fwts_log_info_verbatum(fw, "Unknown subtype of Hardware Device Path.");
 			break;
 		}
 		break;
@@ -184,7 +202,7 @@ static int uefibootpath_check_dev_path(fwts_framework *fw, fwts_uefi_dev_path *d
 			}
 			break;
 		default:
-			fwts_log_info_verbatum(fw, "Unknow subtype of ACPI Device Path.");
+			fwts_log_info_verbatum(fw, "Unknown subtype of ACPI Device Path.");
 			break;
 		}
 		break;
@@ -525,18 +543,75 @@ static int uefibootpath_check_dev_path(fwts_framework *fw, fwts_uefi_dev_path *d
 				errors++;
 			}
 			break;
-		case FWTS_UEFI_RELATIVE_OFFSET_RANGE_SUBTYPE:
-			if (len != sizeof(fwts_relative_offset_range_path)) {
-				fwts_failed(fw, LOG_LEVEL_MEDIUM, "UEFIRelativeOffsetRangeLength",
-					"The length of Relative Offset Range is %" PRIu16 " bytes "
+		case FWTS_UEFI_URI_DEVICE_PATH_SUBTYPE:
+			if (len <= sizeof(fwts_uefi_uri_dev_path)) {
+				fwts_failed(fw, LOG_LEVEL_MEDIUM, "UEFIURIDevPathLength",
+					"The length of URI Device Path is %" PRIu16 " bytes "
+					"should be larger than UEFI specification defined %" PRIu16 " bytes.",
+					len,
+					(uint16_t)sizeof(fwts_uefi_uri_dev_path));
+				errors++;
+			}
+			break;
+		case FWTS_UEFI_UFS_DEVICE_PATH_SUBTYPE:
+			if (len != sizeof(fwts_uefi_ufs_dev_path)) {
+				fwts_failed(fw, LOG_LEVEL_MEDIUM, "UEFIUFSDevPathLength",
+					"The length of UFS(Universal Flash Storage) is %" PRIu16 " bytes "
 					"and differs from UEFI specification defined %" PRIu16 " bytes.",
 					len,
-					(uint16_t)sizeof(fwts_relative_offset_range_path));
+					(uint16_t)sizeof(fwts_uefi_ufs_dev_path));
+				errors++;
+			}
+
+			fwts_uefi_ufs_dev_path *ufs = (fwts_uefi_ufs_dev_path *)dev_path;
+			if (ufs->target_id != 0) {
+				fwts_failed(fw, LOG_LEVEL_MEDIUM, "UEFIPUNFieldInvalid",
+					"The Target ID on the UFS interface(PUN) is %" PRIu8 " ."
+					"This value should be 0 for current UFS2.0 spec compliance "
+					"and reserve/introduce this field to support multiple devices "
+					"per UFS port.",
+					ufs->target_id);
+				errors++;
+			}
+			break;
+		case FWTS_UEFI_SD_DEVICE_PATH_SUBTYPE:
+			if (len != sizeof(fwts_uefi_sd_dev_path)) {
+				fwts_failed(fw, LOG_LEVEL_MEDIUM, "UEFISDDevPathLength",
+					"The length of SD device path is %" PRIu16 " bytes "
+					"and differs from UEFI specification defined %" PRIu16 " bytes.",
+					len,
+					(uint16_t)sizeof(fwts_uefi_sd_dev_path));
+				errors++;
+			}
+			break;
+		case FWTS_UEFI_BLUETOOTH_DEVICE_PATH_SUBTYPE:
+			if (len != sizeof(fwts_uefi_bluetooth_dev_path)) {
+				fwts_failed(fw, LOG_LEVEL_MEDIUM, "UEFIBluetoothDevPathLength",
+					"The length of Bluetooth device path is %" PRIu16 " bytes "
+					"and differs from UEFI specification defined %" PRIu16 " bytes.",
+					len,
+					(uint16_t)sizeof(fwts_uefi_bluetooth_dev_path));
+				errors++;
+			}
+			break;
+		case FWTS_UEFI_WIRELESS_DEVICE_PATH_SUBTYPE:
+			if (len <= sizeof(fwts_uefi_wireless_dev_path)) {
+				fwts_failed(fw, LOG_LEVEL_MEDIUM, "UEFIWirelessDevPathLength",
+					"The length of wireless Device Path is %" PRIu16 " bytes, "
+					"should at least include the SSID filed.",
+					len);
+				errors++;
+			}
+			if (len > (sizeof(fwts_uefi_wireless_dev_path) + 32)) {
+				fwts_failed(fw, LOG_LEVEL_MEDIUM, "UEFIWirelessDevPathLength",
+					"The length of wireless Device Path is %" PRIu16 " bytes, "
+					"the ssid field should not be larger than 32 bytes.",
+					len);
 				errors++;
 			}
 			break;
 		default:
-			fwts_log_info_verbatum(fw, "Unknow subtype of Messaging Device PaERRORth.");
+			fwts_log_info_verbatum(fw, "Unknown subtype of Messaging Device Path.");
 			break;
 		}
 		break;
@@ -641,8 +716,28 @@ static int uefibootpath_check_dev_path(fwts_framework *fw, fwts_uefi_dev_path *d
 				errors++;
 			}
 			break;
+		case FWTS_UEFI_RELATIVE_OFFSET_RANGE_SUBTYPE:
+			if (len != sizeof(fwts_relative_offset_range_path)) {
+				fwts_failed(fw, LOG_LEVEL_MEDIUM, "UEFIRelativeOffsetRangeLength",
+					"The length of Relative Offset Range is %" PRIu16 " bytes "
+					"and differs from UEFI specification defined %" PRIu16 " bytes.",
+					len,
+					(uint16_t)sizeof(fwts_relative_offset_range_path));
+				errors++;
+			}
+			break;
+		case FWTS_UEFI_RAM_DISK_SUBTYPE:
+			if (len != sizeof(fwts_ram_disk_path)) {
+				fwts_failed(fw, LOG_LEVEL_MEDIUM, "UEFIRamDiskDevPathLength",
+					"The length of Ram Disk Device Path is %" PRIu16 " bytes "
+					"and differs from UEFI specification defined %" PRIu16 " bytes.",
+					len,
+					(uint16_t)sizeof(fwts_ram_disk_path));
+				errors++;
+			}
+			break;
 		default:
-			fwts_log_info_verbatum(fw, "Unknow subtype of Media Device Path.");
+			fwts_log_info_verbatum(fw, "Unknown subtype of Media Device Path.");
 			break;
 		}
 		break;
@@ -670,12 +765,12 @@ static int uefibootpath_check_dev_path(fwts_framework *fw, fwts_uefi_dev_path *d
 			}
 			break;
 		default:
-			fwts_log_info_verbatum(fw, "Unknow subtype of BIOS Boot Specification Device Path.");
+			fwts_log_info_verbatum(fw, "Unknown subtype of BIOS Boot Specification Device Path.");
 			break;
 		}
 		break;
 	default:
-		fwts_log_info_verbatum(fw, "Unknow Type of Device Path.");
+		fwts_log_info_verbatum(fw, "Unknown Type of Device Path.");
 		break;
 
 	}

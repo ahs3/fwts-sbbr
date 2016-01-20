@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Canonical
+ * Copyright (C) 2010-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,6 +36,11 @@ typedef struct {
 	fwts_framework_flags flag;	/* Mask of category */
 } fwts_categories;
 
+typedef struct {
+	const char *name;
+	const fwts_log_level filter_level;
+} fwts_log_levels;
+
 /* Suffix ".log", ".xml", etc gets automatically appended */
 #define RESULTS_LOG	"results"
 
@@ -50,9 +55,7 @@ typedef struct {
 	 FWTS_FLAG_UNSAFE |			\
 	 FWTS_FLAG_TEST_UEFI |			\
 	 FWTS_FLAG_TEST_ACPI |			\
-	 FWTS_FLAG_TEST_SBBR_UEFI |		\
-	 FWTS_FLAG_TEST_SBBR_ACPI |		\
-	 FWTS_FLAG_TEST_SBBR)
+	 FWTS_FLAG_TEST_COMPLIANCE_ACPI)
 
 static fwts_categories categories[] = {
 	{ "ACPI",			FWTS_FLAG_TEST_ACPI },
@@ -64,9 +67,17 @@ static fwts_categories categories[] = {
 	{ "Utilities",			FWTS_FLAG_UTILS },
 	{ "Unsafe",			FWTS_FLAG_UNSAFE },
 	{ "UEFI",			FWTS_FLAG_TEST_UEFI },
-	{ "SBBR UEFI",			FWTS_FLAG_TEST_SBBR_UEFI },
-	{ "SBBR ACPI",			FWTS_FLAG_TEST_SBBR_ACPI },
-	{ "All SBBR",			FWTS_FLAG_TEST_SBBR },
+	{ "ACPI Spec Compliance",	FWTS_FLAG_TEST_COMPLIANCE_ACPI },
+	{ NULL,				0 },
+};
+
+static fwts_log_levels log_levels[] = {
+	{ "critical",			LOG_LEVEL_CRITICAL },
+	{ "high",			LOG_LEVEL_CRITICAL | LOG_LEVEL_HIGH },
+	{ "medium",			LOG_LEVEL_CRITICAL | LOG_LEVEL_HIGH | LOG_LEVEL_MEDIUM },
+	{ "low",			LOG_LEVEL_CRITICAL | LOG_LEVEL_HIGH | LOG_LEVEL_MEDIUM | LOG_LEVEL_LOW },
+	{ "info",			LOG_LEVEL_CRITICAL | LOG_LEVEL_HIGH | LOG_LEVEL_MEDIUM | LOG_LEVEL_LOW | LOG_LEVEL_INFO },
+	{ "all",			LOG_LEVEL_ALL },
 	{ NULL,				0 },
 };
 
@@ -113,18 +124,18 @@ static fwts_option fwts_framework_options[] = {
 	{ "rsdp",		"R:", 1, "Specify the physical address of the ACPI RSDP." },
 	{ "pm-method",  "",   1, "Select the power method to use. Accepted values are \"logind\", \"pm-utils\", \"sysfs\""},
 	{ "show-tests-categories","", 0, "Show tests and associated categories." },
-	{ "acpitests",		"",   0, "Run ACPI tests." },
-	{ "sbbruefi",		"",   0, "Run SBBR tests specific to UEFI." },
-	{ "sbbracpi",		"",   0, "Run SBBR tests specific to ACPI." },
-	{ "sbbr",		"",   0, "Run all SBBR tests." },
+	{ "acpitests",		"",   0, "Run general ACPI tests." },
+	{ "acpicompliance",	"",   0, "Run ACPI tests for spec compliance." },
+	{ "log-level",		"",   1, "Specify error level to report failed test messages," },
+	{ "arch",		"",   1, "Specify arch of the tables being tested (defaults to current host)." },
 	{ NULL, NULL, 0, NULL }
 };
 
 static fwts_list fwts_framework_test_list = FWTS_LIST_INIT;
 
 static const char *fwts_copyright[] = {
-	"Some of this work - Copyright (c) 1999 - 2015, Intel Corp. All rights reserved.",
-	"Some of this work - Copyright (c) 2010 - 2015, Canonical.",
+	"Some of this work - Copyright (c) 1999 - 2016, Intel Corp. All rights reserved.",
+	"Some of this work - Copyright (c) 2010 - 2016, Canonical.",
 	NULL
 };
 
@@ -157,7 +168,7 @@ void fwts_framework_test_add(
 	fwts_framework_test *new_test;
 
 	if (flags & ~(FWTS_FLAG_RUN_ALL | FWTS_FLAG_ROOT_PRIV)) {
-		fprintf(stderr, "Test %s flags must be a bit field in 0x%lx, got 0x%lx\n",
+		fprintf(stderr, "Test %s flags must be a bit field in 0x%x, got 0x%x\n",
 			name, FWTS_FLAG_RUN_ALL, flags);
 		exit(EXIT_FAILURE);
 	}
@@ -774,7 +785,8 @@ void fwts_error_inc(fwts_framework *fw, const char *label, int *count)
  *  fwts_framework_log()
  *	log a test result
  */
-void fwts_framework_log(fwts_framework *fw,
+void fwts_framework_log(
+	fwts_framework *fw,
 	fwts_log_field field,
 	const char *label,
 	fwts_log_level level,
@@ -784,7 +796,7 @@ void fwts_framework_log(fwts_framework *fw,
 	char buffer[4096];
 	char prefix[256];
 	char *str = fwts_log_field_to_str_upper(field);
-	bool do_count = true;
+	bool do_count = !FWTS_LEVEL_IGNORE(fw, level);
 
 	if (fmt) {
 		va_list ap;
@@ -803,7 +815,7 @@ void fwts_framework_log(fwts_framework *fw,
 		} else {
 			fwts_log_nl(fw);
 			snprintf(prefix, sizeof(prefix), "%s: ", str);
-			fwts_log_printf(fw->results, field, level, str, label, prefix, "%s", buffer);
+			fwts_log_printf(fw, field, level, str, label, prefix, "%s", buffer);
 			fwts_log_nl(fw);
 		}
 		break;
@@ -818,7 +830,7 @@ void fwts_framework_log(fwts_framework *fw,
 			fwts_summary_add(fw, fw->current_major_test->name, level, buffer);
 			snprintf(prefix, sizeof(prefix), "%s [%s] %s: Test %d, ",
 				str, fwts_log_level_to_str(level), label, fw->current_minor_test_num);
-			fwts_log_printf(fw->results, field, level, str, label, prefix, "%s", buffer);
+			fwts_log_printf(fw, field, level, str, label, prefix, "%s", buffer);
 		}
 		break;
 	case LOG_PASSED:
@@ -827,7 +839,7 @@ void fwts_framework_log(fwts_framework *fw,
 	case LOG_ABORTED:
 		snprintf(prefix, sizeof(prefix), "%s: Test %d, ",
 			str, fw->current_minor_test_num);
-		fwts_log_printf(fw->results, field, level, str, label, prefix, "%s", buffer);
+		fwts_log_printf(fw, field, level, str, label, prefix, "%s", buffer);
 		break;
 	case LOG_INFOONLY:
 		break;	/* no-op */
@@ -921,7 +933,7 @@ static void fwts_framework_heading_info(
 		len += strlen(argv[i]) + 1;
 
 	if ((args = calloc(len, 1)) != NULL) {
-		for (len = 1, i = 1; i < argc; i++) {
+		for (i = 1; i < argc; i++) {
 			strcat(args, " ");
 			strcat(args, argv[i]);
 		}
@@ -1094,6 +1106,44 @@ static int fwts_framework_pm_method_parse(fwts_framework *fw, const char *arg)
 	return FWTS_OK;
 }
 
+/*
+ *  fwts_framework_ll_parse()
+ *	parse log level option
+ */
+static int fwts_framework_ll_parse(fwts_framework *fw, const char *arg)
+{
+	int i;
+
+	for (i = 0; log_levels[i].name; i++) {
+		if (!strcmp(arg, log_levels[i].name)) {
+			fw->filter_level = log_levels[i].filter_level;
+			return FWTS_OK;
+		}
+	}
+	fprintf(stderr, "--log-level supports levels:");
+	for (i = 0; log_levels[i].name; i++)
+		fprintf(stderr, " %s", log_levels[i].name);
+	fprintf(stderr, "\n");
+
+	return FWTS_ERROR;
+}
+
+/*
+ *  fwts_framework_an_parse()
+ *	parse arch (architecture) name option
+ */
+static int fwts_framework_an_parse(fwts_framework *fw, const char *arg)
+{
+	fw->target_arch = fwts_arch_get_arch(arg);
+	if (fw->target_arch == FWTS_ARCH_OTHER) {
+		fprintf(stderr, "--arch can be one of: %s\n",
+			fwts_arch_names());
+		return FWTS_ERROR;
+	}
+
+	return FWTS_OK;
+}
+
 int fwts_framework_options_handler(fwts_framework *fw, int argc, char * const argv[], int option_char, int long_index)
 {
 	FWTS_UNUSED(argc);
@@ -1240,14 +1290,16 @@ int fwts_framework_options_handler(fwts_framework *fw, int argc, char * const ar
 		case 40: /* --acpitests */
 			fw->flags |= FWTS_FLAG_TEST_ACPI;
 			break;
-		case 41: /* --sbbruefi */
-			fw->flags = FWTS_FLAG_TEST_SBBR_UEFI;
+		case 41: /* --acpicompliance */
+			fw->flags |= FWTS_FLAG_TEST_COMPLIANCE_ACPI;
 			break;
-		case 42: /* --sbbracpi */
-			fw->flags = FWTS_FLAG_TEST_SBBR_ACPI;
+		case 42: /* --log-level */
+			if (fwts_framework_ll_parse(fw, optarg) != FWTS_OK)
+				return FWTS_ERROR;
 			break;
-		case 43: /* --sbbr */
-			fw->flags = FWTS_FLAG_TEST_SBBR;
+		case 43: /* --arch */
+			if (fwts_framework_an_parse(fw, optarg) != FWTS_OK)
+				return FWTS_ERROR;
 			break;
 		}
 		break;
@@ -1342,12 +1394,17 @@ int fwts_framework_args(const int argc, char **argv)
 
 	fwts_list tests_to_run;
 	fwts_framework *fw;
+	fwts_list_link *item;
 
 	if ((fw = (fwts_framework *)calloc(1, sizeof(fwts_framework))) == NULL)
 		return FWTS_ERROR;
 
 	/* Set the power method to FWTS_PM_UNDEFINED before we parse arguments */
 	fw->pm_method = FWTS_PM_UNDEFINED;
+
+	/* Set host/target test architecture defaults */
+	fw->host_arch = fwts_arch_get_host();
+	fw->target_arch = fw->host_arch;
 
 	ret = fwts_args_add_options(fwts_framework_options,
 		fwts_framework_options_handler, NULL);
@@ -1360,6 +1417,7 @@ int fwts_framework_args(const int argc, char **argv)
 	fw->flags = FWTS_FLAG_DEFAULT |
 		    FWTS_FLAG_SHOW_PROGRESS;
 	fw->log_type = LOG_TYPE_PLAINTEXT;
+	fw->filter_level = LOG_LEVEL_ALL;
 
 	fwts_list_init(&fw->errors_filter_keep);
 	fwts_list_init(&fw->errors_filter_discard);
@@ -1409,8 +1467,6 @@ int fwts_framework_args(const int argc, char **argv)
 		fwts_dump_info(fw);
 		goto tidy_close;
 	}
-	if ((fw->flags & FWTS_FLAG_RUN_ALL) == 0)
-		fw->flags |= FWTS_FLAG_BATCH;
 	if ((fw->lspci == NULL) || (fw->results_logname == NULL)) {
 		ret = FWTS_ERROR;
 		fprintf(stderr, "%s: Memory allocation failure.", argv[0]);
@@ -1465,15 +1521,17 @@ int fwts_framework_args(const int argc, char **argv)
 			fwts_list_append(&tests_to_run, test);
 	}
 
-	if (fwts_list_len(&tests_to_run) == 0) {
-		/* Find tests that are eligible for running */
-		fwts_list_link *item;
-		fwts_list_foreach(item, &fwts_framework_test_list) {
-			fwts_framework_test *test = fwts_list_data(fwts_framework_test*, item);
-			if (fw->flags & test->flags & FWTS_FLAG_RUN_ALL)
-				if (fwts_framework_skip_test(&tests_to_skip, test) == NULL)
-					fwts_list_append(&tests_to_run, test);
-		}
+	/* No options given and no tests, so default to run batch tests */
+	if (!(FWTS_FLAG_RUN_ALL & fw->flags) &&
+	    (fwts_list_len(&tests_to_run) == 0))
+		fw->flags |= FWTS_FLAG_BATCH;
+
+	/* Find tests that are eligible for running */
+	fwts_list_foreach(item, &fwts_framework_test_list) {
+		fwts_framework_test *test = fwts_list_data(fwts_framework_test*, item);
+		if (fw->flags & test->flags & FWTS_FLAG_RUN_ALL)
+			if (fwts_framework_skip_test(&tests_to_skip, test) == NULL)
+				fwts_list_append(&tests_to_run, test);
 	}
 
 	if (!(fw->flags & FWTS_FLAG_QUIET)) {

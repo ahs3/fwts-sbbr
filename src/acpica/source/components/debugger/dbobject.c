@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -567,7 +567,8 @@ AcpiDbDecodeLocals (
     }
     else
     {
-        AcpiOsPrintf ("No Local Variables are initialized for method [%4.4s]\n",
+        AcpiOsPrintf (
+            "No Local Variables are initialized for method [%4.4s]\n",
             AcpiUtGetNodeName (Node));
     }
 }
@@ -644,7 +645,8 @@ AcpiDbDecodeArguments (
     }
     else
     {
-        AcpiOsPrintf ("No Arguments are initialized for method [%4.4s]\n",
+        AcpiOsPrintf (
+            "No Arguments are initialized for method [%4.4s]\n",
             AcpiUtGetNodeName (Node));
     }
 }

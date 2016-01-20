@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Canonical
+ * Copyright (C) 2010-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -39,8 +39,6 @@
 #define BIOS_END  	(0x000fffff)		/* End of BIOS memory */
 #define BIOS_LENGTH	(BIOS_END - BIOS_START)	/* Length of BIOS memory */
 #define PAGE_SIZE	(4096)
-
-#define ACPI_MAX_TABLES	(64)			/* Max number of ACPI tables */
 
 static fwts_acpi_table_info	tables[ACPI_MAX_TABLES];
 
@@ -236,7 +234,7 @@ static void fwts_acpi_add_table(
 	int i;
 	int which = 0;
 
-	for (i=0;i<ACPI_MAX_TABLES;i++) {
+	for (i = 0; i < ACPI_MAX_TABLES; i++) {
 		if (addr && tables[i].addr == addr) {
 			/* We don't need it, it's a duplicate, so free and return */
 			fwts_low_free(table);
@@ -251,7 +249,11 @@ static void fwts_acpi_add_table(
 			tables[i].addr = addr;
 			tables[i].length = length;
 			tables[i].which = which;
+			tables[i].index = i;
 			tables[i].provenance = provenance;
+			tables[i].has_aml =
+				((!strcmp(tables[i].name, "DSDT")) ||
+				 (!strcmp(tables[i].name, "SSDT")));
 			return;
 		}
 	}
@@ -718,15 +720,19 @@ static int fwts_acpi_load_tables_from_acpidump(fwts_framework *fw)
  */
 static uint8_t *fwts_acpi_load_table_from_file(const int fd, size_t *length)
 {
-	uint8_t *ptr = NULL;
+	uint8_t *ptr = NULL, *tmp;
 	size_t size = 0;
 	char buffer[4096];
 
 	*length = 0;
 
+	/*
+	 *  read table into buffer in the normal heap
+	 *  so we don't have to do expensive fwts_low_reallocs
+	 *  per iteration on long tables
+	 */
 	for (;;) {
 		ssize_t n = read(fd, buffer, sizeof(buffer));
-		uint8_t *tmp;
 
 		if (n == 0)
 			break;
@@ -738,11 +744,11 @@ static uint8_t *fwts_acpi_load_table_from_file(const int fd, size_t *length)
 			continue;
 		}
 		if (n > (ssize_t)sizeof(buffer))
-			goto too_big;	/* Unlikely */
+			goto err;	/* Unlikely */
 		if (size + n > 0xffffffff)
-			goto too_big;	/* Very unlikely */
+			goto err;	/* Very unlikely */
 
-		if ((tmp = (uint8_t*)fwts_low_realloc(ptr, size + n + 1)) == NULL) {
+		if ((tmp = (uint8_t*)realloc(ptr, size + n + 1)) == NULL) {
 			free(ptr);
 			return NULL;
 		}
@@ -750,10 +756,19 @@ static uint8_t *fwts_acpi_load_table_from_file(const int fd, size_t *length)
 		memcpy(ptr + size, buffer, n);
 		size += n;
 	}
-	*length = size;
-	return ptr;
 
-too_big:
+	/*
+	 *  ..and copy table into a 32 bit memory space buffer
+	 */
+	if ((tmp = fwts_low_malloc(size)) == NULL)
+		goto err;
+
+	*length = size;
+	memcpy(tmp, ptr, size);
+	free(ptr);
+	return tmp;
+
+err:
 	free(ptr);
 	*length = 0;
 	return NULL;
@@ -770,19 +785,21 @@ static int fwts_acpi_load_tables_from_file_generic(
 	int *count)
 {
 	struct dirent **dir_entries;
-	int i;
+	int i, n;
+
+	*count = 0;
+	if (!acpi_table_path)
+		return FWTS_ERROR;
 
 	/*
  	 * Read in directory in alphabetical name sorted order
 	 * to ensure the tables are always loaded into memory
 	 * in some form of deterministic order
 	 */
-	if ((*count = scandir(acpi_table_path, &dir_entries, 0, alphasort)) < 0) {
-		*count = 0;
+	if ((n = scandir(acpi_table_path, &dir_entries, 0, alphasort)) < 0)
 		return FWTS_ERROR;
-	}
 
-	for (i = 0; i < *count; i++) {
+	for (i = 0; i < n; i++) {
 		/* Ignore . directories */
 		if (dir_entries[i]->d_name[0] == '.')
 			continue;
@@ -827,6 +844,8 @@ static int fwts_acpi_load_tables_from_file_generic(
 						name[4] = '\0';
 					}
 
+					(*count)++;
+
 					if (!strncmp(name, "XSDT", 4) || !strncmp(name, "RSDT", 4)) {
 						/*
 						 * For XSDT and RSDT we don't bother loading at this point.
@@ -864,9 +883,12 @@ static int fwts_acpi_load_tables_from_file(fwts_framework *fw)
 {
 	int count;
 
+	if (!fw->acpi_table_path)
+		return FWTS_ERROR;
+
 	fwts_acpi_load_tables_from_file_generic(fw, fw->acpi_table_path, ".dat", &count);
 	if (count == 0) {
-		fwts_log_error(fw, "Could not find any APCI tables in directory '%s'.\n", fw->acpi_table_path);
+		fwts_log_error(fw, "Could not find any ACPI tables in directory '%s'.\n", fw->acpi_table_path);
 		return FWTS_ERROR;
 	}
 	return FWTS_OK;
@@ -907,10 +929,7 @@ static int fwts_acpi_load_tables_fixup(fwts_framework *fw)
 	char *oem_tbl_id = "FWTSIDXX";
 	fwts_acpi_table_info *table;
 	fwts_acpi_table_rsdp *rsdp = NULL;
-	fwts_acpi_table_rsdt *rsdt = NULL;
-	fwts_acpi_table_xsdt *xsdt = NULL;
 	fwts_acpi_table_fadt *fadt = NULL;
-	fwts_acpi_table_facs *facs = NULL;
 	uint64_t rsdt_fake_addr = 0, xsdt_fake_addr = 0;
 	bool redo_rsdp_checksum = false;
 
@@ -932,11 +951,10 @@ static int fwts_acpi_load_tables_fixup(fwts_framework *fw)
 		fwts_log_error(fw, "ACPI table find failure.");
 		return FWTS_ERROR;
 	}
-	if (table)
-		facs = (fwts_acpi_table_facs *)table->data;
-	else {
+	if (!table) {
+		fwts_acpi_table_facs *facs;
 		size_t size = 64;
-		uint64_t facs_fake_addr;
+		uint64_t facs_addr;
 
 		/* This is most unexpected, so warn about it */
 		fwts_log_warning(fw, "No FACS found, fwts has faked one instead.");
@@ -949,12 +967,23 @@ static int fwts_acpi_load_tables_fixup(fwts_framework *fw)
 		facs->hardware_signature = 0xf000a200;	/* Some signature */
 		facs->flags = 0;
 		facs->version = 2;
-		facs_fake_addr = fwts_fake_physical_addr(size);
-		fadt->firmware_control = (uint32_t)facs_fake_addr;
-		if (fadt->header.length >= 140)
-			fadt->x_firmware_ctrl = (uint64_t)facs_fake_addr;
 
-		fwts_acpi_add_table("FACS", facs, (uint64_t)facs_fake_addr,
+		/* Get physical address of FACS, try to take it from FACS first,
+		   and if that fails, create a fake one and update FACS */
+		if (fadt->header.length >= 140 && fadt->x_firmware_ctrl != 0) {
+			facs_addr = fadt->x_firmware_ctrl;
+		} else if (fadt->firmware_control != 0) {
+			facs_addr = (uint64_t)fadt->firmware_control;
+		} else {
+			facs_addr = (uint64_t)fwts_fake_physical_addr(size);
+			if (fadt->header.length >= 140)
+				fadt->x_firmware_ctrl = facs_addr;
+			else
+				fadt->firmware_control = (uint32_t)facs_addr;
+			fadt->header.checksum -= fwts_checksum((uint8_t*)&facs_addr, sizeof(facs_addr));
+		}
+
+		fwts_acpi_add_table("FACS", facs, (uint64_t)facs_addr,
 			size, FWTS_ACPI_TABLE_FROM_FIXUP);
 	}
 
@@ -974,10 +1003,11 @@ static int fwts_acpi_load_tables_fixup(fwts_framework *fw)
 		return FWTS_ERROR;
 	}
 	if (table) {
-		rsdt = (fwts_acpi_table_rsdt *)table->data;
 		rsdt_fake_addr = table->addr;
 	} else {
 		/* No RSDT? go and fake one */
+
+		fwts_acpi_table_rsdt *rsdt;
 		size_t size = sizeof(fwts_acpi_table_rsdt) + (count * sizeof(uint32_t));
 
 		if ((rsdt = fwts_low_calloc(1, size)) == NULL) {
@@ -987,7 +1017,7 @@ static int fwts_acpi_load_tables_fixup(fwts_framework *fw)
 
 		for (i=0,j=0; j<count ;i++)
 			if (fwts_acpi_get_table(fw, i, &table) == FWTS_OK)
-				if (fwts_acpi_table_fixable(table))
+				if (table && fwts_acpi_table_fixable(table))
 					rsdt->entries[j++] = (uint32_t)table->addr;
 
 		strncpy(rsdt->header.signature, "RSDT", 4);
@@ -1010,10 +1040,11 @@ static int fwts_acpi_load_tables_fixup(fwts_framework *fw)
 		return FWTS_ERROR;
 	}
 	if (table) {
-		xsdt = (fwts_acpi_table_xsdt *)table->data;
 		xsdt_fake_addr = table->addr;
 	} else {
 		/* No XSDT? go and fake one */
+
+		fwts_acpi_table_xsdt *xsdt;
 		size_t size = sizeof(fwts_acpi_table_rsdt) + (count * sizeof(uint64_t));
 
 		if ((xsdt = fwts_low_calloc(1, size)) == NULL) {
@@ -1023,7 +1054,7 @@ static int fwts_acpi_load_tables_fixup(fwts_framework *fw)
 
 		for (i=0,j=0; j<count ;i++)
 			if (fwts_acpi_get_table(fw, i, &table) == FWTS_OK)
-				if (fwts_acpi_table_fixable(table))
+				if (table && fwts_acpi_table_fixable(table))
 					xsdt->entries[j++] = table->addr;
 
 		strncpy(xsdt->header.signature, "XSDT", 4);
@@ -1098,7 +1129,7 @@ static int fwts_acpi_load_tables_from_sysfs(fwts_framework *fw)
 	fwts_acpi_load_tables_from_file_generic(fw, "/sys/firmware/acpi/tables/dynamic", "", &count);
 	total += count;
 	if (total == 0) {
-		fwts_log_error(fw, "Could not find any APCI tables in directory '/sys/firmware/acpi/tables'.\n");
+		fwts_log_error(fw, "Could not find any ACPI tables in directory '/sys/firmware/acpi/tables'.\n");
 		return FWTS_ERROR;
 	}
 	return FWTS_OK;

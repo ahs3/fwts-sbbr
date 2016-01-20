@@ -9,7 +9,7 @@ NoEcho('
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -123,12 +123,13 @@ NoEcho('
  *****************************************************************************/
 
 %type <n> ArgList
-%type <n> ASLCode
+%type <n> AslCode
 %type <n> BufferData
 %type <n> BufferTermData
 %type <n> CompilerDirective
 %type <n> DataObject
 %type <n> DefinitionBlockTerm
+%type <n> DefinitionBlockList
 %type <n> IntegerData
 %type <n> NamedObject
 %type <n> NameSpaceModifier

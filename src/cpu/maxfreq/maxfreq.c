@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Canonical
+ * Copyright (C) 2010-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -180,7 +180,7 @@ static int maxfreq_test1(fwts_framework *fw)
 					"indicates a misconfiguration of the "
 					"ACPI _PSS (Performance Supported "
 					"States) object. This is described in "
-					"section 8.4.4.2 of the APCI "
+					"section 8.4.4.2 of the ACPI "
 					"specification.",
 					(double)maxfreq/1000000.0, cpunum, path,
 					(double)cpufreq[cpunum]/1000000.0);

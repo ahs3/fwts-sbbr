@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Canonical
+ * Copyright (C) 2010-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,6 +24,9 @@
 #include <string.h>
 #include <stdbool.h>
 
+typedef struct fwts_framework fwts_framework;
+
+#include "fwts_arch.h"
 #include "fwts_log.h"
 #include "fwts_list.h"
 #include "fwts_acpica_mode.h"
@@ -40,23 +43,21 @@ typedef enum {
 	FWTS_FLAG_SHOW_PROGRESS_DIALOG		= 0x00000010,
 	FWTS_FLAG_ACPICA_DEBUG			= 0x00000020,
 	FWTS_FLAG_DUMP				= 0x00000040,
-	FWTS_FLAG_BATCH				= 0x00001000,
-	FWTS_FLAG_INTERACTIVE			= 0x00002000,
-	FWTS_FLAG_BATCH_EXPERIMENTAL		= 0x00004000,
-	FWTS_FLAG_INTERACTIVE_EXPERIMENTAL	= 0x00008000,
-	FWTS_FLAG_POWER_STATES			= 0x00010000,
-	FWTS_FLAG_ROOT_PRIV			= 0x00020000,
-	FWTS_FLAG_UNSAFE			= 0x00040000,
-	FWTS_FLAG_TEST_BIOS			= 0x01000000,
-	FWTS_FLAG_TEST_UEFI			= 0x02000000,
-	FWTS_FLAG_TEST_ACPI			= 0x04000000,
-	FWTS_FLAG_UTILS				= 0x08000000,
-	FWTS_FLAG_QUIET				= 0x10000000,
-	FWTS_FLAG_SHOW_TESTS_FULL		= 0x20000000,
-	FWTS_FLAG_SHOW_TESTS_CATEGORIES	        = 0x40000000,
-	FWTS_FLAG_TEST_SBBR_UEFI	       = 0x100000000,
-	FWTS_FLAG_TEST_SBBR_ACPI	       = 0x200000000,
-	FWTS_FLAG_TEST_SBBR		       = 0x300000000
+	FWTS_FLAG_BATCH				= 0x00000100,
+	FWTS_FLAG_INTERACTIVE			= 0x00000200,
+	FWTS_FLAG_BATCH_EXPERIMENTAL		= 0x00000400,
+	FWTS_FLAG_INTERACTIVE_EXPERIMENTAL	= 0x00000800,
+	FWTS_FLAG_POWER_STATES			= 0x00001000,
+	FWTS_FLAG_ROOT_PRIV			= 0x00002000,
+	FWTS_FLAG_UNSAFE			= 0x00004000,
+	FWTS_FLAG_TEST_BIOS			= 0x00010000,
+	FWTS_FLAG_TEST_UEFI			= 0x00020000,
+	FWTS_FLAG_TEST_ACPI			= 0x00040000,
+	FWTS_FLAG_UTILS				= 0x00080000,
+	FWTS_FLAG_QUIET				= 0x00100000,
+	FWTS_FLAG_SHOW_TESTS_FULL		= 0x00200000,
+	FWTS_FLAG_SHOW_TESTS_CATEGORIES		= 0x00400000,
+	FWTS_FLAG_TEST_COMPLIANCE_ACPI		= 0x00800000
 } fwts_framework_flags;
 
 #define FWTS_FLAG_TEST_MASK		\
@@ -106,7 +107,7 @@ static inline void fwts_framework_summate_results(fwts_results *total, fwts_resu
 /*
  *  Test framework context
  */
-typedef struct {
+typedef struct fwts_framework {
 	uint32_t magic;				/* identify struct magic */
 	fwts_log *results;			/* log for test results */
 	char *results_logname;			/* filename of results log */
@@ -135,6 +136,7 @@ typedef struct {
 	int minor_test_progress;		/* Percentage completion of current test */
 	bool print_summary;			/* Print summary of results at end of test runs */
 	fwts_log_level failed_level;		/* Bit mask of failed levels in test run */
+	fwts_log_level filter_level;		/* --log-level option filter */
 
 	int firmware_type;			/* Type of firmware */
 	bool show_progress;			/* Show progress while running current test */
@@ -147,6 +149,8 @@ typedef struct {
 	fwts_acpica_mode acpica_mode;		/* ACPICA mode flags */
 	void *rsdp;				/* ACPI RSDP address */
 	fwts_pm_method pm_method;
+	fwts_architecture host_arch;		/* arch FWTS was built for */
+	fwts_architecture target_arch;		/* arch being tested */
 } fwts_framework;
 
 typedef struct {
@@ -276,4 +280,8 @@ static void __test_init (void)						\
 
 #define FWTS_REGISTER(name, ops, priority, flags) \
 	FWTS_REGISTER_FEATURES(name, ops, priority, flags, 0)
+
+#define FWTS_LEVEL_IGNORE(fw, level)	\
+	((level) && !((level) & fw->filter_level))
+
 #endif

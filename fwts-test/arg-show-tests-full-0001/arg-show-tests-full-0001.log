@@ -9,6 +9,8 @@ ACPI tests:
   Test for single instance of APIC/MADT table.
  asf             (1 test):
   ASF! Alert Standard Format Table test.
+ aspt            (1 test):
+  ASPT Table test.
  bert            (1 test):
   BERT Boot Error Record Table test.
  bgrt            (1 test):
@@ -61,7 +63,7 @@ ACPI tests:
   Validate MCFG PCI config space.
  mchi            (1 test):
   MCHI Management Controller Host Interface Table test.
- method          (190 tests):
+ method          (195 tests):
   Test Method Names.
   Test _AEI.
   Test _EVT (Event Method).
@@ -86,6 +88,7 @@ ACPI tests:
   Test _GSB (Global System Interrupt Base).
   Test _HPP (Hot Plug Parameters).
   Test _PRS (Possible Resource Settings).
+  Test _PRT (PCI Routing Table).
   Test _PXM (Proximity).
   Test _CCA (Cache Coherency Attribute).
   Test _EDL (Eject Device List).
@@ -149,10 +152,13 @@ ACPI tests:
   Test _PPC (Performance Present Capabilities).
   Test _PPE (Polling for Platform Error).
   Test _PSD (Power State Dependencies).
+  Test _PTC (Processor Throttling Control).
   Test _TDL (T-State Depth Limit).
   Test _TPC (Throttling Present Capabilities).
   Test _TSD (Throttling State Dependencies).
   Test _TSS (Throttling Supported States).
+  Test _LPI (Low Power Idle States).
+  Test _RDI (Resource Dependencies for Idle).
   Test _PUR (Processor Utilization Request).
   Test _MSG (Message).
   Test _SST (System Status).
@@ -194,6 +200,7 @@ ACPI tests:
   Test _PSR (Power Source).
   Test _GAI (Get Averaging Level).
   Test _GHL (Get Harware Limit).
+  Test _PMC (Power Meter Capabilities).
   Test _PMD (Power Meter Devices).
   Test _PMM (Power Meter Measurement).
   Test _FIF (Fan Information).
@@ -307,6 +314,8 @@ Batch tests:
  aspm            (2 tests):
   PCIe ASPM ACPI test.
   PCIe ASPM registers test.
+ aspt            (1 test):
+  ASPT Table test.
  autobrightness  (2 tests):
   Test for maximum and actual brightness.
   Change actual brightness.
@@ -395,7 +404,7 @@ Batch tests:
   Validate MCFG PCI config space.
  mchi            (1 test):
   MCHI Management Controller Host Interface Table test.
- method          (190 tests):
+ method          (195 tests):
   Test Method Names.
   Test _AEI.
   Test _EVT (Event Method).
@@ -420,6 +429,7 @@ Batch tests:
   Test _GSB (Global System Interrupt Base).
   Test _HPP (Hot Plug Parameters).
   Test _PRS (Possible Resource Settings).
+  Test _PRT (PCI Routing Table).
   Test _PXM (Proximity).
   Test _CCA (Cache Coherency Attribute).
   Test _EDL (Eject Device List).
@@ -483,10 +493,13 @@ Batch tests:
   Test _PPC (Performance Present Capabilities).
   Test _PPE (Polling for Platform Error).
   Test _PSD (Power State Dependencies).
+  Test _PTC (Processor Throttling Control).
   Test _TDL (T-State Depth Limit).
   Test _TPC (Throttling Present Capabilities).
   Test _TSD (Throttling State Dependencies).
   Test _TSS (Throttling Supported States).
+  Test _LPI (Low Power Idle States).
+  Test _RDI (Resource Dependencies for Idle).
   Test _PUR (Processor Utilization Request).
   Test _MSG (Message).
   Test _SST (System Status).
@@ -528,6 +541,7 @@ Batch tests:
   Test _PSR (Power Source).
   Test _GAI (Get Averaging Level).
   Test _GHL (Get Harware Limit).
+  Test _PMC (Power Meter Capabilities).
   Test _PMD (Power Meter Devices).
   Test _PMM (Power Meter Measurement).
   Test _FIF (Fan Information).
@@ -663,11 +677,12 @@ Batch tests:
   CPU Virtualisation Configuration test.
  waet            (1 test):
   Windows ACPI Emulated Devices Table test.
- wakealarm       (4 tests):
+ wakealarm       (5 tests):
   Test existence of RTC with alarm interface.
   Trigger wakealarm for 1 seconds in the future.
   Test if wakealarm is fired.
   Multiple wakealarm firing tests.
+  Reset wakealarm time.
  wdat            (1 test):
   WDAT Microsoft Hardware Watchdog Action Table test.
  wmi             (1 test):
@@ -714,6 +729,8 @@ Utilities:
   Dump ACPI _CRS (Current Resource Settings).
  ebdadump        (1 test):
   Dump EBDA region.
+ esrtdump        (1 test):
+  Dump ESRT Table.
  gpedump         (1 test):
   Dump GPEs.
  memmapdump      (1 test):

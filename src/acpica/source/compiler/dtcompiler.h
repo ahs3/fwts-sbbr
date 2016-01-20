@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -242,6 +242,12 @@ DtCompileTable (
     ACPI_DMTABLE_INFO       *Info,
     DT_SUBTABLE             **RetSubtable,
     BOOLEAN                 Required);
+
+ACPI_STATUS
+DtCompileTwoSubtables (
+    void                    **List,
+    ACPI_DMTABLE_INFO       *TableInfo1,
+    ACPI_DMTABLE_INFO       *TableInfo2);
 
 ACPI_STATUS
 DtCompilePadding (

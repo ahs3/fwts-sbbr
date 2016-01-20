@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Canonical
+ * Copyright (C) 2010-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -31,7 +31,7 @@
 /*
  * ACPI methods + objects used in Linux ACPI driver:
  *
- * Name	 APCI Spec.	Tested
+ * Name	 ACPI Spec.	Tested
  *	 section
  * _ACx  11.4.1		Y
  * _ADR  6.1.1, B.6.1,	Y
@@ -88,7 +88,7 @@
  * _DSM  9.14.1		N
  * _DSS  B.6.8		Y
  * _DSW  7.2.1		Y
- * _DTI  11.4.5		N
+ * _DTI  11.4.5		Y
  * _Exx  5.6.4.1	n/a
  * _EC   12.12		Y
  * _EDL  6.3.1		Y
@@ -127,7 +127,7 @@
  * _Lxx  5.6.4.1	n/a
  * _LCK  6.3.4		Y
  * _LID  9.4.1		Y
- * _LPI  8.4.4.3	N
+ * _LPI  8.4.4.3	Y
  * _MAT  6.2.9		N
  * _MBM  9.12.2.1	Y
  * _MLS  6.1.7		Y
@@ -137,9 +137,7 @@
  * _NTT  11.4.9		Y
  * _OFF  7.1.2		Y
  * _ON_  7.1.3		Y
- * _OS   5.7.3		N
  * _OSC  6.2.10		n/a
- * _OSI  5.7.2		n/a
  * _OST  6.3.5		n/a
  * _PAI  10.4.4		n/a
  * _PCL  10.3.2		Y
@@ -149,12 +147,11 @@
  * _PIC  5.8.1		Y
  * _PIF  10.3.3		Y
  * _PLD  6.1.8		Y
- * _PMC  10.4.1		N
+ * _PMC  10.4.1		Y
  * _PMD  10.4.8		Y
  * _PMM  10.4.3		Y
  * _PPC  8.4.4.3	Y
  * _PPE  8.4.6		Y
- * _PR   5.3.1		n/a
  * _PR0  7.2.8		Y
  * _PR1	 7.2.9		Y
  * _PR2  7.2.10		Y
@@ -163,7 +160,7 @@
  * _PRL  10.3.4		Y
  * _PRR  7.3.26		Y
  * _PRS  6.2.11		Y
- * _PRT  6.2.12		N
+ * _PRT  6.2.12		Y
  * _PRW  7.2.11		Y
  * _PS0  7.2.2		Y
  * _PS1  7.2.3		Y
@@ -177,15 +174,14 @@
  * _PSS  8.4.4.2	Y
  * _PSV  11.4.9		Y
  * _PSW  7.2.12		Y
- * _PTC  8.4.3.1	N
+ * _PTC  8.4.3.1	Y
  * _PTP  10.4.2		n/a
  * _PTS  7.3.2		Y
  * _PUR  8.5.11		Y
  * _PXM  6.2.13 	Y
  * _Qxx  5.6.4.1	n/a
- * _RDI  8.5		N
+ * _RDI  8.5		Y
  * _REG  6.5.4		n/a
- * _REV  5.7.4		n/a
  * _RMV  6.3.6		Y
  * _ROM  B.4.3		Y
  * _RST  7.3.25		Y
@@ -205,7 +201,6 @@
  * _S2W	 7.2.22		Y
  * _S3W  7.2.23		Y
  * _S4W  7.2.24		Y
- * _SB_  5.3.1		n/a
  * _SBS  10.1.3		Y
  * _SCP  11.4.11	Y
  * _SDD  9.8.3.3.1	n/a
@@ -242,7 +237,6 @@
  * _TSS  8.4.3.2	Y
  * _TST  11.4.18	Y
  * _TTS  7.3.6		Y
- * _TZ_  5.3.1		n/a
  * _TZD  11.4.19	Y
  * _TZM  11.4.20	Y
  * _TZP  11.4.21	Y
@@ -2249,6 +2243,94 @@ static int method_test_PRS(fwts_framework *fw)
 		"_PRS", NULL, 0, method_test_CRS_return, "_PRS");
 }
 
+static void method_test_PRT_return(
+	fwts_framework *fw,
+	char *name,
+	ACPI_BUFFER *buf,
+	ACPI_OBJECT *obj,
+	void *private)
+{
+	uint32_t i, j;
+	bool failed = false;
+
+	FWTS_UNUSED(private);
+
+	if (method_check_type(fw, name, buf, ACPI_TYPE_PACKAGE) != FWTS_OK)
+		return;
+
+	if (method_package_elements_all_type(fw, name, "_PRT", obj, ACPI_TYPE_PACKAGE) != FWTS_OK)
+		return;
+
+	for (i = 0; i < obj->Package.Count; i++) {
+		ACPI_OBJECT *pkg;
+		ACPI_OBJECT *element;
+		pkg = &obj->Package.Elements[i];
+
+		/* check size of sub-packages */
+		if (pkg->Package.Count != 4) {
+			fwts_failed(fw, LOG_LEVEL_CRITICAL,
+				"Method_PRTSubPackageElementCount",
+				"%s sub-package %" PRIu32 " was expected to have 4"
+				"elements, got %" PRIu32 " elements instead.",
+				name, i, pkg->Package.Count);
+			failed = true;
+			continue;
+		}
+
+		/* check types of sub-packages' elements */
+		for (j = 0; j < 4; j++) {
+			element = &pkg->Package.Elements[j];
+
+			if (j == 2) {
+				if (element->Type != ACPI_TYPE_INTEGER && element->Type != ACPI_TYPE_LOCAL_REFERENCE) {
+					fwts_failed(fw, LOG_LEVEL_CRITICAL,
+						"Method_PRTBadSubElementType",
+						"%s element %" PRIu32 " is not an integer or a NamePath.", name, j);
+					failed = true;
+				}
+				continue;
+			}
+
+			if (element->Type != ACPI_TYPE_INTEGER) {
+				fwts_failed(fw, LOG_LEVEL_CRITICAL,
+					"Method_PRTBadSubElementType",
+					"%s element %" PRIu32 " is not an integer.", name, j);
+				failed = true;
+			}
+		}
+
+		/* check sub-packages's PCI address */
+		element = &pkg->Package.Elements[0];
+		if ((element->Integer.Value & 0xFFFF) != 0xFFFF) {
+			fwts_failed(fw, LOG_LEVEL_CRITICAL,
+				"Method_PRTBadSubElement",
+				"%s element 0 is expected to end with 0xFFFF, got 0x%" PRIx32 ".",
+				name, (uint32_t) element->Integer.Value);
+			failed = true;
+		}
+
+		/* check sub-packages's PCI pin number */
+		element = &pkg->Package.Elements[1];
+		if (element->Integer.Value > 3) {
+			fwts_failed(fw, LOG_LEVEL_CRITICAL,
+				"Method_PRTBadSubElement",
+				"%s element 1 is expected to be 0..3, got 0x%" PRIx32 ".",
+				name, (uint32_t) element->Integer.Value);
+			failed = true;
+		}
+	}
+
+	if (!failed)
+		method_passed_sane(fw, name, "package");
+}
+
+static int method_test_PRT(fwts_framework *fw)
+{
+	/* Re-use the _CRS checking on the returned buffer */
+	return method_evaluate_method(fw, METHOD_OPTIONAL,
+		"_PRT", NULL, 0, method_test_PRT_return, "_PRT");
+}
+
 static int method_test_DMA(fwts_framework *fw)
 {
 	return method_evaluate_method(fw, METHOD_OPTIONAL,
@@ -3721,6 +3803,61 @@ static int method_test_PDL(fwts_framework *fw)
 		"_PDL", NULL, 0, method_test_integer_return, NULL);
 }
 
+
+static void method_test_PTC_return(
+	fwts_framework *fw,
+	char *name,
+	ACPI_BUFFER *buf,
+	ACPI_OBJECT *obj,
+	void *private)
+{
+	uint32_t i;
+	bool failed = false;
+
+	FWTS_UNUSED(private);
+
+	if (method_check_type(fw, name, buf, ACPI_TYPE_PACKAGE) != FWTS_OK)
+		return;
+
+	if (method_package_elements_all_type(fw, name, "_PTC", obj, ACPI_TYPE_BUFFER) != FWTS_OK)
+		return;
+
+	if (method_package_count_equal(fw, name, "_PTC", obj, 2) != FWTS_OK)
+		return;
+
+	for (i = 0; i < obj->Package.Count; i++) {
+		ACPI_RESOURCE *resource;
+		ACPI_STATUS   status;
+		ACPI_OBJECT *element_buf = &obj->Package.Elements[i];
+
+		status = AcpiBufferToResource(element_buf->Buffer.Pointer, element_buf->Buffer.Length, &resource);
+		if (ACPI_FAILURE(status)) {
+			failed = true;
+			fwts_failed(fw, LOG_LEVEL_HIGH,
+				"Method_PTCBadElement",
+				"%s should contain only Resource Descriptors", name);
+			continue;
+		}
+
+		if (resource->Type != ACPI_RESOURCE_TYPE_GENERIC_REGISTER) {
+			failed = true;
+			fwts_failed(fw, LOG_LEVEL_HIGH,
+				"Method_PTCBadElement",
+				"%s should contain only Resource Type 16, got %" PRIu32 "\n",
+					name, resource->Type);
+		}
+	}
+
+	if (!failed)
+		method_passed_sane(fw, name, "package");
+}
+
+static int method_test_PTC(fwts_framework *fw)
+{
+	return method_evaluate_method(fw, METHOD_OPTIONAL,
+		"_PTC", NULL, 0, method_test_PTC_return, NULL);
+}
+
 static int method_test_TDL(fwts_framework *fw)
 {
 	return method_evaluate_method(fw, METHOD_OPTIONAL,
@@ -3974,6 +4111,189 @@ static int method_test_TSS(fwts_framework *fw)
 {
 	return method_evaluate_method(fw, METHOD_OPTIONAL,
 		"_TSS", NULL, 0, method_test_TSS_return, NULL);
+}
+
+/*
+ * Section 8.4.4 Lower Power Idle States
+*/
+
+static void method_test_LPI_return(
+	fwts_framework *fw,
+	char *name,
+	ACPI_BUFFER *buf,
+	ACPI_OBJECT *obj,
+	void *private)
+{
+	uint32_t i, j;
+	bool failed = false;
+
+	FWTS_UNUSED(private);
+
+	if (method_check_type(fw, name, buf, ACPI_TYPE_PACKAGE) != FWTS_OK)
+		return;
+
+	if (method_package_count_min(fw, name, "_LPI", obj, 3) != FWTS_OK)
+		return;
+
+	/* first 3 elements are integers, and rests are packages */
+	for (i = 0; i < obj->Package.Count; i++) {
+		if (i < 3) {
+			if (obj->Package.Elements[i].Type != ACPI_TYPE_INTEGER) {
+					fwts_failed(fw, LOG_LEVEL_HIGH,
+					"Method_LPIBadElementType",
+					"%s element %" PRIu32 " is not an integer.", name, i);
+				failed = true;
+				continue;
+			}
+
+			if (i == 0) {
+				if (obj->Package.Elements[i].Integer.Value != 0) {
+					fwts_failed(fw, LOG_LEVEL_HIGH,
+						"Method_LPIBadRevision",
+						"%s: Expected Revision to be 0, "
+						"got 0x%4.4" PRIx64 ".", name,
+						(uint64_t)obj->Package.Elements[i].Integer.Value);
+					failed = true;
+				}
+			} else if (i == 2) {
+				if (obj->Package.Elements[i].Integer.Value != obj->Package.Count - 3) {
+					fwts_failed(fw, LOG_LEVEL_HIGH,
+					"Method_LPIBadCount",
+					"%s Count reports %" PRIu32 ", but there are %" PRIu32 " sub-packages.",
+					name, (uint32_t) obj->Package.Elements[i].Integer.Value,
+					obj->Package.Count - 3);
+					failed = true;
+				}
+			}
+		} else {
+			ACPI_OBJECT *pkg;
+			if (obj->Package.Elements[i].Type != ACPI_TYPE_PACKAGE) {
+					fwts_failed(fw, LOG_LEVEL_HIGH,
+					"Method_LPIBadElementType",
+					"%s element %" PRIu32 " is not a package.", name, i);
+				failed = true;
+				continue;
+			}
+
+			pkg = &obj->Package.Elements[i];
+			for (j = 0; j < pkg->Package.Count; j++) {
+				switch (j) {
+				case 0 ... 5:
+					if (pkg->Package.Elements[j].Type != ACPI_TYPE_INTEGER) {
+						fwts_failed(fw, LOG_LEVEL_HIGH,
+							"Method_LPIBadESublementType",
+							"%s sub-package %" PRIu32 " element %" PRIu32 " is not "
+							"an integer.", name, i, j);
+						failed = true;
+					}
+					break;
+				case 6:
+					if (pkg->Package.Elements[j].Type != ACPI_TYPE_INTEGER &&
+					    pkg->Package.Elements[j].Type != ACPI_TYPE_BUFFER) {
+						fwts_failed(fw, LOG_LEVEL_HIGH,
+							"Method_LPIBadESublementType",
+							"%s sub-package %" PRIu32 " element %" PRIu32 " is not "
+							"a buffer or an integer.", name, i, j);
+						failed = true;
+					}
+					break;
+				case 7 ... 8:
+					if (pkg->Package.Elements[j].Type != ACPI_TYPE_BUFFER) {
+						fwts_failed(fw, LOG_LEVEL_HIGH,
+							"Method_LPIBadESublementType",
+							"%s sub-package %" PRIu32 " element %" PRIu32 " is not "
+							"a buffer.", name, i, j);
+						failed = true;
+					}
+					break;
+				case 9:
+					if (pkg->Package.Elements[j].Type != ACPI_TYPE_STRING) {
+						fwts_failed(fw, LOG_LEVEL_HIGH,
+							"Method_LPIBadESublementType",
+							"%s sub-package %" PRIu32 " element %" PRIu32 " is not "
+							"a string.", name, i, j);
+						failed = true;
+					}
+					break;
+				default:
+					fwts_failed(fw, LOG_LEVEL_HIGH,
+						"Method_LPIBadESublement",
+						"%s sub-package %" PRIu32 " element %" PRIu32 " should have "
+						"9 elements, got .", name, i, j+1);
+					failed = true;
+					break;
+				}
+			}
+		}
+	}
+
+	if (!failed)
+		method_passed_sane(fw, name, "package");
+}
+
+static int method_test_LPI(fwts_framework *fw)
+{
+	return method_evaluate_method(fw, METHOD_OPTIONAL,
+		"_LPI", NULL, 0, method_test_LPI_return, NULL);
+}
+
+static void method_test_RDI_return(
+	fwts_framework *fw,
+	char *name,
+	ACPI_BUFFER *buf,
+	ACPI_OBJECT *obj,
+	void *private)
+{
+	uint32_t i, j;
+	bool failed = false;
+
+	FWTS_UNUSED(private);
+
+	if (method_check_type(fw, name, buf, ACPI_TYPE_PACKAGE) != FWTS_OK)
+		return;
+
+	/* First element is Revision */
+	if (obj->Package.Elements[0].Integer.Value != 0) {
+		fwts_failed(fw, LOG_LEVEL_HIGH,
+			"Method_RDIBadID",
+			"%s: Expected Revision to be 0, "
+			"got 0x%4.4" PRIx64 ".", name,
+			(uint64_t)obj->Package.Elements[0].Integer.Value);
+		failed = true;
+	}
+
+	/* The rest of elements are packages with references */
+	for (i = 1; i < obj->Package.Count; i++) {
+		ACPI_OBJECT *pkg;
+		pkg = &obj->Package.Elements[i];
+
+		if (pkg->Type != ACPI_TYPE_PACKAGE) {
+				fwts_failed(fw, LOG_LEVEL_HIGH,
+				"Method_RDIBadElementType",
+				"%s element %" PRIu32 " is not a package.", name, i);
+			failed = true;
+			continue;
+		}
+
+		for (j = 0; j < pkg->Package.Count; j++) {
+			if (pkg->Package.Elements[j].Type != ACPI_TYPE_LOCAL_REFERENCE) {
+				fwts_failed(fw, LOG_LEVEL_HIGH,
+					"Method_RDIBadESublementType",
+					"%s sub-package %" PRIu32 " element %" PRIu32 " is not "
+					"a Reference.", name, i, j);
+				failed = true;
+			}
+		}
+	}
+
+	if (!failed)
+		method_passed_sane(fw, name, "package");
+}
+
+static int method_test_RDI(fwts_framework *fw)
+{
+	return method_evaluate_method(fw, METHOD_OPTIONAL,
+		"_RDI", NULL, 0, method_test_RDI_return, NULL);
 }
 
 /*
@@ -5168,6 +5488,106 @@ static int method_test_GHL(fwts_framework *fw)
 {
 	return method_evaluate_method(fw, METHOD_OPTIONAL,
 		"_GHL", NULL, 0, method_test_integer_return, NULL);
+}
+
+static void method_test_PMC_return(
+	fwts_framework *fw,
+	char *name,
+	ACPI_BUFFER *buf,
+	ACPI_OBJECT *obj,
+	void *private)
+{
+	uint32_t i;
+	bool failed = false;
+	ACPI_OBJECT *element;
+
+	FWTS_UNUSED(private);
+
+	if (method_check_type(fw, name, buf, ACPI_TYPE_PACKAGE) != FWTS_OK)
+		return;
+
+	if (method_package_count_equal(fw, name, "_PMC", obj, 14) != FWTS_OK)
+		return;
+
+	/* check element types */
+	for (i = 0; i < 14; i++) {
+		element = &obj->Package.Elements[i];
+		if (i > 10) {
+			if (element->Type != ACPI_TYPE_STRING) {
+				fwts_failed(fw, LOG_LEVEL_MEDIUM,
+					"Method_PMCBadElementType",
+					"%s element %" PRIu32 " is not a string.", name, i);
+				failed = true;
+			}
+		} else {
+				if (element->Type != ACPI_TYPE_INTEGER) {
+					fwts_failed(fw, LOG_LEVEL_MEDIUM,
+						"Method_PMCBadElementType",
+						"%s element %" PRIu32 " is not an integer.", name, i);
+					failed = true;
+				}
+		}
+	}
+
+	/* check element's constraints */
+	element = &obj->Package.Elements[0];
+	if (element->Integer.Value & 0xFFFFFEF0) {
+		fwts_failed(fw, LOG_LEVEL_MEDIUM,
+			"Method_PMCBadElement",
+			"%s element 0 has reserved bits that are non-zero, got "
+			"0x%" PRIx32 " and expected 0 for these field. ", name,
+			(uint32_t) element->Integer.Value);
+		failed = true;
+	}
+
+	element = &obj->Package.Elements[1];
+	if (element->Integer.Value != 0) {
+		fwts_failed(fw, LOG_LEVEL_MEDIUM,
+			"Method_PMCBadElement",
+			"%s element 1 is expected to be 0, got 0x%" PRIx32 ".",
+			name, (uint32_t) element->Integer.Value);
+		failed = true;
+	}
+
+	element = &obj->Package.Elements[2];
+	if (element->Integer.Value != 0 && element->Integer.Value != 1) {
+		fwts_failed(fw, LOG_LEVEL_MEDIUM,
+			"Method_PMCBadElement",
+			"%s element 2 is expected to be 0 or 1, got 0x%" PRIx32 ".",
+			name, (uint32_t) element->Integer.Value);
+		failed = true;
+	}
+
+	element = &obj->Package.Elements[3];
+	if (element->Integer.Value > 100000) {
+		fwts_failed(fw, LOG_LEVEL_MEDIUM,
+			"Method_PMCBadElement",
+			"%s element 3 exceeds 100000 (100 percent) = 0x%" PRIx32 ".",
+			name, (uint32_t) element->Integer.Value);
+		failed = true;
+	}
+
+	/* nothing to check for elements 4~7 */
+
+	element = &obj->Package.Elements[8];
+	if (element->Integer.Value != 0 && element->Integer.Value != 0xFFFFFFFF) {
+		fwts_failed(fw, LOG_LEVEL_MEDIUM,
+			"Method_PMCBadElement",
+			"%s element 8 is expected to be 0 or 1, got 0x%" PRIx32 ".",
+			name, (uint32_t) element->Integer.Value);
+		failed = true;
+	}
+
+	/* nothing to check for elements 9~13 */
+
+	if (!failed)
+		method_passed_sane(fw, name, "package");
+}
+
+static int method_test_PMC(fwts_framework *fw)
+{
+	return method_evaluate_method(fw, METHOD_OPTIONAL,
+		"_PMC", NULL, 0, method_test_PMC_return, NULL);
 }
 
 static void method_test_PMD_return(
@@ -6497,6 +6917,7 @@ static fwts_framework_minor_test method_tests[] = {
 	/* { method_test_HPX, "Test _HPX (Hot Plug Extensions)." }, */
 	/* { method_test_MAT, "Test _MAT (Multiple APIC Table Entry)." }, */
 	{ method_test_PRS, "Test _PRS (Possible Resource Settings)." },
+	{ method_test_PRT, "Test _PRT (PCI Routing Table)." },
 	{ method_test_PXM, "Test _PXM (Proximity)." },
 	/* { method_test_SLI, "Test _SLI (System Locality Information)." }, */
 	/* { method_test_SRS, "Test _SRS (Set Resource Settings)." }, */
@@ -6584,11 +7005,15 @@ static fwts_framework_minor_test method_tests[] = {
 	{ method_test_PPC, "Test _PPC (Performance Present Capabilities)." },
 	{ method_test_PPE, "Test _PPE (Polling for Platform Error)." },
 	{ method_test_PSD, "Test _PSD (Power State Dependencies)." },
-	/* { method_test_PTC, "Test _PTC (Processor Throttling Control)." }, */
+	{ method_test_PTC, "Test _PTC (Processor Throttling Control)." },
 	{ method_test_TDL, "Test _TDL (T-State Depth Limit)." },
 	{ method_test_TPC, "Test _TPC (Throttling Present Capabilities)." },
 	{ method_test_TSD, "Test _TSD (Throttling State Dependencies)." },
 	{ method_test_TSS, "Test _TSS (Throttling Supported States)." },
+
+	/* Section 8.4.4 Lower Power Idle States */
+	{ method_test_LPI, "Test _LPI (Low Power Idle States)." },
+	{ method_test_RDI, "Test _RDI (Resource Dependencies for Idle)." },
 
 	/* Section 8.5 Processor Aggregator Device */
 	{ method_test_PUR, "Test _PUR (Processor Utilization Request)." },
@@ -6678,7 +7103,7 @@ static fwts_framework_minor_test method_tests[] = {
 	{ method_test_GAI, "Test _GAI (Get Averaging Level)." },
 	{ method_test_GHL, "Test _GHL (Get Harware Limit)." },
 	/* { method_test_PAI, "Test _PAI (Power Averaging Interval)." }, */
-	/* { method_test_PMC, "Test _PMC (Power Meter Capabilities)." }, */
+	{ method_test_PMC, "Test _PMC (Power Meter Capabilities)." },
 	{ method_test_PMD, "Test _PMD (Power Meter Devices)." },
 	{ method_test_PMM, "Test _PMM (Power Meter Measurement)." },
 	/* { method_test_PTP, "Test _PTP (Power Trip Points)." }, */

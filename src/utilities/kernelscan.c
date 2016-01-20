@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2015 Canonical
+ * Copyright (C) 2012-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,10 +23,14 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
-
-#include <pcre.h>
+#include <sys/types.h>
+#include <regex.h>
 #include <json.h>
+
 #include "config.h"
+
+#undef DATAROOTDIR
+#define DATAROOTDIR "/usr/share/"
 
 #define PARSER_OK		0
 #define PARSER_COMMENT_FOUND	1
@@ -49,8 +53,8 @@ typedef enum {
 typedef struct {
         char *pattern;		/* pattern that we compare to kernel messages */
 	compare_mode cm;	/* 'r' regex or 's' string comparison */
-        pcre *re;		/* regex from pattern */
-        pcre_extra *extra;
+        regex_t compiled;	/* regex from pattern */
+	bool compiled_ok;	/* regex compiled OK */
 } klog_pattern;
 
 /*
@@ -171,6 +175,7 @@ static void token_new(token *t)
 	t->len = 1024;
 	t->ptr = t->token;
 	t->type = TOKEN_UNKNOWN;
+	*(t->ptr) = '\0';
 }
 
 /*
@@ -190,6 +195,9 @@ static void token_free(token *t)
 {
 	free(t->token);
 	t->token = NULL;
+	t->ptr = NULL;
+	t->len = 0;
+	t->type = TOKEN_UNKNOWN;
 }
 
 /*
@@ -206,11 +214,14 @@ static void token_append(token *t, int ch)
 		*(t->ptr) = 0;
 	} else {
 		/* No more space, add 1K more space */
+		ptrdiff_t diff = t->ptr - t->token;
+
 		t->len += 1024;
 		if ((t->token = realloc(t->token, t->len)) == NULL) {
 			fprintf(stderr, "token_append: Out of memory!\n");
 			exit(EXIT_FAILURE);
 		}
+		t->ptr = t->token + diff;
 		*(t->ptr) = ch;
 		t->ptr++;
 		*(t->ptr) = 0;
@@ -270,9 +281,7 @@ static klog_pattern *klog_load(const char *table)
 
 	/* Now fetch json objects and compile regex */
 	for (i = 0; i < n; i++) {
-		const char *error;
 		const char *str;
-		int erroffset;
 		json_object *obj;
 #if JSON_HAS_GET_EX
 		json_object *obj_str;
@@ -320,15 +329,14 @@ static klog_pattern *klog_load(const char *table)
 
 		/* Pre-compile regular expressions to make things run a bit faster */
 		if (patterns[i].cm == COMPARE_REGEX) {
-			if ((patterns[i].re = pcre_compile(patterns[i].pattern, 0, &error, &erroffset, NULL)) == NULL) {
-				fprintf(stderr, "Regex %s failed to compile: %s.\n", patterns[i].pattern, error);
-				patterns[i].re = NULL;
+			int rc;
+
+			rc = regcomp(&patterns[i].compiled, patterns[i].pattern, REG_EXTENDED);
+			if (rc) {
+				fprintf(stderr, "Regex %s failed to compile: %d.\n", patterns[i].pattern, rc);
+				patterns[i].compiled_ok = false;
 			} else {
-				patterns[i].extra = pcre_study(patterns[i].re, 0, &error);
-				if (error != NULL) {
-					fprintf(stderr, "Regex %s failed to optimize: %s.\n", patterns[i].pattern, error);
-					patterns[i].re = NULL;
-				}
+				patterns[i].compiled_ok = true;
 			}
 		}
 	}
@@ -352,10 +360,9 @@ static bool klog_find(char *str, klog_pattern *patterns)
 				return true;
 			}
 		} else if (patterns[i].cm == COMPARE_REGEX) {
-			int vector[1];
-			if (pcre_exec(patterns[i].re, patterns[i].extra, str, strlen(str), 0, 0, vector, 1) == 0) {
+			if (patterns[i].compiled_ok &&
+			    (!regexec(&patterns[i].compiled, str, 0, NULL, 0)))
 				return true;
-			}
 		}
 	}
 
@@ -370,8 +377,7 @@ static void klog_free(klog_pattern *patterns)
 	int i;
 
 	for (i = 0; patterns[i].pattern; i++) {
-		pcre_free(patterns[i].re);
-		pcre_free(patterns[i].extra);
+		regfree(&patterns[i].compiled);
 		free(patterns[i].pattern);
 	}
 	free(patterns);
@@ -801,6 +807,7 @@ static int parse_kernel_message(parser *p, token *t)
 		int ret = get_token(p, t);
 		if (ret == EOF) {
 			free(line);
+			free(str);
 			return EOF;
 		}
 
@@ -814,8 +821,9 @@ static int parse_kernel_message(parser *p, token *t)
 				} else {
 					printf("ADD: %s\n", line);
 				}
-				free(line);
 			}
+			free(line);
+			free(str);
 			return PARSER_OK;
 		}
 
@@ -866,6 +874,7 @@ static int parse_kernel_message(parser *p, token *t)
 
 		token_clear(t);
 	}
+	free(line);
 }
 
 /*
@@ -955,16 +964,20 @@ static int parse_cpp_includes(FILE *fp)
 		if (t.type == TOKEN_CPP) {
 			for (;;) {
 				token_clear(&t);
-				if (get_token(&p, &t) == EOF)
+				if (get_token(&p, &t) == EOF) {
+					token_free(&t);
 					return EOF;
+				}
 				if (strcmp(t.token, "\n") == 0)
 					break;
 				if (t.type == TOKEN_WHITE_SPACE) {
 					continue;
 				}
 				if (strcmp(t.token, "include") == 0) {
-					if (parse_cpp_include(&p, &t) == EOF)
+					if (parse_cpp_include(&p, &t) == EOF) {
+						token_free(&t);
 						return EOF;
+					}
 					break;
 				}
 				printf("#%s", t.token);
@@ -975,6 +988,7 @@ static int parse_cpp_includes(FILE *fp)
 		}
 		token_clear(&t);
 	}
+	token_free(&t);
 	return EOF;
 }
 

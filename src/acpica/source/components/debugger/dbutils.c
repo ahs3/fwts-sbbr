@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -271,6 +271,7 @@ AcpiDbDumpExternalObject (
             {
                 AcpiOsPrintf ("\n");
             }
+
             AcpiUtDebugDumpBuffer (
                 ACPI_CAST_PTR (UINT8, ObjDesc->Buffer.Pointer),
                 ObjDesc->Buffer.Length, DB_BYTE_DISPLAY, _COMPONENT);

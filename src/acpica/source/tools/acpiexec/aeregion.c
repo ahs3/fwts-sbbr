@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -221,34 +221,19 @@ AeRegionInit (
 }
 
 
-void
-AeInstallRegionHandlers (
-    void)
-{
-    UINT32                  i;
-    ACPI_STATUS             Status;
-
-    /*
-     * Install handlers for some of the "device driver" address spaces
-     * such as SMBus, etc.
-     */
-    for (i = 0; i < ACPI_ARRAY_LENGTH (SpaceIdList); i++)
-    {
-        /* Install handler at the root object */
-
-        Status = AcpiInstallAddressSpaceHandler (ACPI_ROOT_OBJECT,
-                    SpaceIdList[i], AeRegionHandler,
-                    AeRegionInit, &AeMyContext);
-        if (ACPI_FAILURE (Status))
-        {
-            ACPI_EXCEPTION ((AE_INFO, Status,
-                "Could not install an OpRegion handler for %s space(%u)",
-                AcpiUtGetRegionName((UINT8) SpaceIdList[i]), SpaceIdList[i]));
-            return;
-        }
-    }
-}
-
+/******************************************************************************
+ *
+ * FUNCTION:    AeOverrideRegionHandlers
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Override the default region handlers for memory, i/o, and
+ *              pci_config. Also install a handler for EC. This is part of
+ *              the "install early handlers" functionality.
+ *
+ *****************************************************************************/
 
 void
 AeOverrideRegionHandlers (
@@ -266,14 +251,57 @@ AeOverrideRegionHandlers (
         /* Install handler at the root object */
 
         Status = AcpiInstallAddressSpaceHandler (ACPI_ROOT_OBJECT,
-                    DefaultSpaceIdList[i], AeRegionHandler,
-                    AeRegionInit, &AeMyContext);
+            DefaultSpaceIdList[i], AeRegionHandler,
+            AeRegionInit, &AeMyContext);
+
         if (ACPI_FAILURE (Status))
         {
             ACPI_EXCEPTION ((AE_INFO, Status,
-                "Could not install a default OpRegion handler for %s space(%u)",
+                "Could not install an OpRegion handler for %s space(%u)",
                 AcpiUtGetRegionName ((UINT8) DefaultSpaceIdList[i]),
                 DefaultSpaceIdList[i]));
+        }
+    }
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AeInstallRegionHandlers
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Install handlers for the address spaces other than memory,
+ *              i/o, and pci_config.
+ *
+ *****************************************************************************/
+
+void
+AeInstallRegionHandlers (
+    void)
+{
+    UINT32                  i;
+    ACPI_STATUS             Status;
+
+    /*
+     * Install handlers for some of the "device driver" address spaces
+     * such as SMBus, etc.
+     */
+    for (i = 0; i < ACPI_ARRAY_LENGTH (SpaceIdList); i++)
+    {
+        /* Install handler at the root object */
+
+        Status = AcpiInstallAddressSpaceHandler (ACPI_ROOT_OBJECT,
+            SpaceIdList[i], AeRegionHandler,
+            AeRegionInit, &AeMyContext);
+
+        if (ACPI_FAILURE (Status))
+        {
+            ACPI_EXCEPTION ((AE_INFO, Status,
+                "Could not install an OpRegion handler for %s space(%u)",
+                AcpiUtGetRegionName((UINT8) SpaceIdList[i]), SpaceIdList[i]));
             return;
         }
     }
@@ -445,9 +473,10 @@ AeRegionHandler (
     Length = (ACPI_SIZE) RegionObject->Region.Length;
     SpaceId = RegionObject->Region.SpaceId;
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_OPREGION, "Operation Region request on %s at 0x%X\n",
-            AcpiUtGetRegionName (RegionObject->Region.SpaceId),
-            (UINT32) Address));
+    ACPI_DEBUG_PRINT ((ACPI_DB_OPREGION,
+        "Operation Region request on %s at 0x%X\n",
+        AcpiUtGetRegionName (RegionObject->Region.SpaceId),
+        (UINT32) Address));
 
     /*
      * Region support can be disabled with the -do option.
@@ -482,16 +511,16 @@ AeRegionHandler (
                 /* Split the 64-bit request into two 32-bit requests */
 
                 Status = AcpiHwReadPort (Address, &Value1, 32);
-                AE_CHECK_OK (AcpiHwReadPort, Status);
+                ACPI_CHECK_OK (AcpiHwReadPort, Status);
                 Status = AcpiHwReadPort (Address+4, &Value2, 32);
-                AE_CHECK_OK (AcpiHwReadPort, Status);
+                ACPI_CHECK_OK (AcpiHwReadPort, Status);
 
                 *Value = Value1 | ((UINT64) Value2 << 32);
             }
             else
             {
                 Status = AcpiHwReadPort (Address, &Value1, BitWidth);
-                AE_CHECK_OK (AcpiHwReadPort, Status);
+                ACPI_CHECK_OK (AcpiHwReadPort, Status);
                 *Value = (UINT64) Value1;
             }
             break;
@@ -503,14 +532,14 @@ AeRegionHandler (
                 /* Split the 64-bit request into two 32-bit requests */
 
                 Status = AcpiHwWritePort (Address, ACPI_LODWORD (*Value), 32);
-                AE_CHECK_OK (AcpiHwWritePort, Status);
+                ACPI_CHECK_OK (AcpiHwWritePort, Status);
                 Status = AcpiHwWritePort (Address+4, ACPI_HIDWORD (*Value), 32);
-                AE_CHECK_OK (AcpiHwWritePort, Status);
+                ACPI_CHECK_OK (AcpiHwWritePort, Status);
             }
             else
             {
                 Status = AcpiHwWritePort (Address, (UINT32) *Value, BitWidth);
-                AE_CHECK_OK (AcpiHwWritePort, Status);
+                ACPI_CHECK_OK (AcpiHwWritePort, Status);
             }
             break;
 
@@ -891,7 +920,8 @@ AeRegionHandler (
         ((UINT64)(RegionElement->Address) + RegionElement->Length))
     {
         ACPI_WARNING ((AE_INFO,
-            "Request on [%4.4s] is beyond region limit Req-0x%X+0x%X, Base=0x%X, Len-0x%X",
+            "Request on [%4.4s] is beyond region limit "
+            "Req-0x%X+0x%X, Base=0x%X, Len-0x%X",
             (RegionObject->Region.Node)->Name.Ascii, (UINT32) Address,
             ByteWidth, (UINT32)(RegionElement->Address),
             RegionElement->Length));
@@ -903,7 +933,7 @@ AeRegionHandler (
      * Get BufferValue to point to the "address" in the buffer
      */
     BufferValue = ((UINT8 *) RegionElement->Buffer +
-                    ((UINT64) Address - (UINT64) RegionElement->Address));
+        ((UINT64) Address - (UINT64) RegionElement->Address));
 
 DoFunction:
     /*

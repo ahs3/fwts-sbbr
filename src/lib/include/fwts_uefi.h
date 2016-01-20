@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Canonical
+ * Copyright (C) 2010-2016 Canonical
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -96,6 +96,20 @@ enum {
 #define EFI_OS_INDICATIONS_FILE_CAPSULE_DELIVERY_SUPPORTED	0x0000000000000004
 #define EFI_OS_INDICATIONS_FMP_CAPSULE_SUPPORTED 		0x0000000000000008
 #define EFI_OS_INDICATIONS_CAPSULE_RESULT_VAR_SUPPORTED		0x0000000000000010
+
+#define ESRT_FW_TYPE_UNKNOWN		0x00000000
+#define ESRT_FW_TYPE_SYSTEMFIRMWARE	0x00000001
+#define ESRT_FW_TYPE_DEVICEFIRMWARE	0x00000002
+#define ESRT_FW_TYPE_UEFIDRIVER		0x00000003
+
+#define LAST_ATTEMPT_STATUS_SUCCESS			0x00000000
+#define LAST_ATTEMPT_STATUS_ERR_UNSUCCESSFUL		0x00000001
+#define LAST_ATTEMPT_STATUS_ERR_INSUFFICIENT_RESOURCES	0x00000002
+#define LAST_ATTEMPT_STATUS_ERR_INCORRECT_VERSION	0x00000003
+#define LAST_ATTEMPT_STATUS_ERR_INVALID_FORMAT		0x00000004
+#define LAST_ATTEMPT_STATUS_ERR_AUTH_ERROR		0x00000005
+#define LAST_ATTEMPT_STATUS_ERR_PWR_EVT_AC		0x00000006
+#define LAST_ATTEMPT_STATUS_ERR_PWR_EVT_BATT		0x00000007
 
 #define EFI_CERT_SHA256_GUID \
 { 0xc1c41626, 0x504c, 0x4092, { 0xac, 0xa9, 0x41, 0xf9, 0x36, 0x93, 0x43, 0x28 }}
@@ -201,7 +215,8 @@ typedef enum {
 	FWTS_UEFI_PCCARD_DEV_PATH_SUBTYPE =		(0x02),
 	FWTS_UEFI_MEMORY_MAPPED_DEV_PATH_SUBTYPE =	(0x03),
 	FWTS_UEFI_VENDOR_DEV_PATH_SUBTYPE =		(0x04),
-	FWTS_UEFI_CONTROLLER_DEV_PATH_SUBTYPE =		(0x05)
+	FWTS_UEFI_CONTROLLER_DEV_PATH_SUBTYPE =		(0x05),
+	FWTS_UEFI_BMC_DEV_PATH_SUBTYPE =		(0x06)
 } hw_dev_path_subtypes;
 
 typedef enum {
@@ -231,7 +246,12 @@ typedef enum {
 	FWTS_UEFI_VLAN_DEVICE_PATH_SUBTYPE = 		(0x14),
 	FWTS_UEFI_FIBRE_CHANNEL_EX_DEVICE_PATH_SUBTYPE = (0x15),
 	FWTS_UEFI_SAS_EX_DEVICE_PATH_SUBTYPE =		(0x16),
-	FWTS_UEFI_NVM_EXPRESS_NAMESP_DEVICE_PATH_SUBTYPE = (0x17)
+	FWTS_UEFI_NVM_EXPRESS_NAMESP_DEVICE_PATH_SUBTYPE = (0x17),
+	FWTS_UEFI_URI_DEVICE_PATH_SUBTYPE = 		(0x18),
+	FWTS_UEFI_UFS_DEVICE_PATH_SUBTYPE = 		(0x19),
+	FWTS_UEFI_SD_DEVICE_PATH_SUBTYPE = 		(0x1a),
+	FWTS_UEFI_BLUETOOTH_DEVICE_PATH_SUBTYPE = 	(0x1b),
+	FWTS_UEFI_WIRELESS_DEVICE_PATH_SUBTYPE = 	(0x1c)
 } messaging_dev_path_subtypes;
 
 typedef enum {
@@ -242,7 +262,8 @@ typedef enum {
 	FWTS_UEFI_PROTOCOL_DEVICE_PATH_SUBTYPE =	(0x05),
 	FWTS_UEFI_PIWG_FW_FILE_DEVICE_PATH_SUBTYPE =	(0x06),
 	FWTS_UEFI_PIWG_FW_VOLUME_DEVICE_PATH_SUBTYPE =	(0x07),
-	FWTS_UEFI_RELATIVE_OFFSET_RANGE_SUBTYPE = 	(0x08)
+	FWTS_UEFI_RELATIVE_OFFSET_RANGE_SUBTYPE = 	(0x08),
+	FWTS_UEFI_RAM_DISK_SUBTYPE =			(0x09)
 } media_dev_path_subtypes;
 
 typedef enum {
@@ -284,6 +305,12 @@ typedef struct {
 	fwts_uefi_dev_path dev_path;
 	uint32_t controller;
 } __attribute__ ((packed)) fwts_uefi_controller_dev_path;
+
+typedef struct {
+	fwts_uefi_dev_path dev_path;
+	uint8_t interface_type;
+	uint64_t base_addr;
+} __attribute__ ((packed)) fwts_uefi_bmc_dev_path;
 
 typedef struct {
 	fwts_uefi_dev_path dev_path;
@@ -489,12 +516,38 @@ typedef struct {
 	uint16_t tpg_tag;
 	char iscsi_tn[0];
 } __attribute__((packed)) fwts_uefi_iscsi_dev_path;
- 
+
 typedef struct {
 	fwts_uefi_dev_path dev_path;
 	uint32_t namesp_id;
 	uint64_t ext_unique_id;
 } __attribute__((packed)) fwts_uefi_nvm_express_namespace_dev_path;
+
+typedef struct {
+	fwts_uefi_dev_path dev_path;
+	char uri[0];
+} __attribute__((packed)) fwts_uefi_uri_dev_path;
+
+typedef struct {
+	fwts_uefi_dev_path dev_path;
+	uint8_t target_id;
+	uint8_t lun;
+} __attribute__((packed)) fwts_uefi_ufs_dev_path;
+
+typedef struct {
+	fwts_uefi_dev_path dev_path;
+	uint8_t slot_number;
+} __attribute__((packed)) fwts_uefi_sd_dev_path;
+
+typedef struct {
+	fwts_uefi_dev_path dev_path;
+	uint8_t bluetooth_addr[6];
+} __attribute__((packed)) fwts_uefi_bluetooth_dev_path;
+
+typedef struct {
+	fwts_uefi_dev_path dev_path;
+	char ssid[0];
+} __attribute__((packed)) fwts_uefi_wireless_dev_path;
 
 typedef struct {
 	fwts_uefi_dev_path dev_path;
@@ -545,6 +598,14 @@ typedef struct {
 	uint64_t starting_offset;
 	uint64_t ending_offset;
 } __attribute__((packed)) fwts_relative_offset_range_path;
+
+typedef struct {
+	fwts_uefi_dev_path dev_path;
+	uint64_t starting_addr;
+	uint64_t ending_addr;
+	fwts_uefi_guid disk_type_guid;
+	uint16_t disk_instance;
+} __attribute__((packed)) fwts_ram_disk_path;
 
 typedef struct {
 	fwts_uefi_dev_path dev_path;

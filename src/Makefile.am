@@ -30,6 +30,7 @@ fwts_SOURCES = main.c 				\
 	acpi/acpitables/acpitables.c 		\
 	acpi/apicinstance/apicinstance.c 	\
 	acpi/asf/asf.c				\
+	acpi/aspt/aspt.c			\
 	acpi/battery/battery.c 			\
 	acpi/bert/bert.c			\
 	acpi/bgrt/bgrt.c			\
@@ -129,7 +130,7 @@ fwts_SOURCES = main.c 				\
 	uefi/uefivarinfo/uefivarinfo.c		\
 	uefi/uefibootpath/uefibootpath.c	\
 	uefi/uefirtauthvar/uefirtauthvar.c	\
-	ahs3/foo/foo.c
+	uefi/esrtdump/esrtdump.c
 
 fwts_LDFLAGS = -lm `pkg-config --libs glib-2.0 gio-2.0`
 

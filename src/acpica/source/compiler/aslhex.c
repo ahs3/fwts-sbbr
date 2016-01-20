@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2015, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2016, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -121,7 +121,6 @@
 /*
  * This module emits ASCII hex output files in either C, ASM, or ASL format
  */
-
 
 /* Local prototypes */
 
@@ -295,6 +294,7 @@ HxDoHexOutputC (
 
         FlPrintFile (ASL_FILE_HEX_OUTPUT, "  /* %8.8X", Offset);
         LsDumpAsciiInComment (ASL_FILE_HEX_OUTPUT, LineLength, FileData);
+
         FlPrintFile (ASL_FILE_HEX_OUTPUT, "%*s*/\n",
             HEX_TABLE_LINE_SIZE - LineLength + 1, " ");
 
@@ -382,6 +382,7 @@ HxDoHexOutputAsl (
 
         FlPrintFile (ASL_FILE_HEX_OUTPUT, "  /* %8.8X", Offset);
         LsDumpAsciiInComment (ASL_FILE_HEX_OUTPUT, LineLength, FileData);
+
         FlPrintFile (ASL_FILE_HEX_OUTPUT, "%*s*/\n",
             HEX_TABLE_LINE_SIZE - LineLength + 1, " ");
 
@@ -465,6 +466,7 @@ HxDoHexOutputAsm (
 
         FlPrintFile (ASL_FILE_HEX_OUTPUT, "  ; %8.8X", Offset);
         LsDumpAsciiInComment (ASL_FILE_HEX_OUTPUT, LineLength, FileData);
+
         FlPrintFile (ASL_FILE_HEX_OUTPUT, "\n");
 
         Offset += LineLength;
