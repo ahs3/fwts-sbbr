@@ -24,6 +24,7 @@ configure
 data/Makefile
 data/Makefile.in
 depcomp
+fwts-test/
 install-sh
 libtool
 ltmain.sh
